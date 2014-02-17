@@ -1,6 +1,5 @@
-Convert markdown to IPython Notebook
-====================================
-
+Create IPython Notebooks from markdown
+--------------------------------------
 
 This is a simple tool to convert markdown with code into an IPython
 Notebook.
