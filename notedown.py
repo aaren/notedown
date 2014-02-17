@@ -1,3 +1,6 @@
+import sys
+import argparse
+
 from IPython.nbformat.v3.rwbase import NotebookReader
 from IPython.nbformat.v3.nbjson import JSONWriter
 
@@ -93,11 +96,22 @@ class MarkdownReader(NotebookReader):
                                       "cell type".format(state=state))
 
 
-if __name__ == '__main__':
-    input_file = './how.md'
-    output_file = './how.ipynb'
-    with open(input_file, 'r') as fp, open(output_file, 'w') as op:
+def cli():
+    """Execute for command line usage."""
+    description = "Create an IPython notebook from markdown."
+    example_use = "Example:  notedown some_markdown.md > new_notebook.ipynb"
+    parser = argparse.ArgumentParser(description=description,
+                                     epilog=example_use)
+    parser.add_argument('input_file',
+                        help="markdown input file",)
+
+    args = parser.parse_args()
+
+    with open(args.input_file, 'r') as ip, sys.stdout as op:
         reader = MarkdownReader()
         writer = JSONWriter()
-        notebook = reader.read(fp)
+        notebook = reader.read(ip)
         writer.write(notebook, op)
+
+if __name__ == '__main__':
+    cli()

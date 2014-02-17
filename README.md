@@ -7,7 +7,21 @@ Notebook.
 
 Usage:
 
-    notedown input.md output.ipynb
+    notedown input.md > output.ipynb
+
+
+It is really simple and separates your markdown into code and not
+code. Code goes into code cells, not-code goes into markdown cells.
+Currently only works with Github Flavored Markdown.
+
+Installation:
+
+    pip install notedown
+
+
+### Why?
+
+I don't know. Maybe you prefer writing in markdown.
 
 
 ### What this does **not** do:
