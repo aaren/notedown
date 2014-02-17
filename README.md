@@ -12,7 +12,8 @@ Usage:
 
 It is really simple and separates your markdown into code and not
 code. Code goes into code cells, not-code goes into markdown cells.
-Currently only works with Github Flavored Markdown.
+Currently only works with Github Flavored Markdown (code-cells
+marked with \`\`\`).
 
 Installation:
 
