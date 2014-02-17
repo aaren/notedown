@@ -13,6 +13,9 @@ class MarkdownReader(NotebookReader):
     code = u'codecell'
     markdown = u'markdowncell'
 
+    # delimiter for code cells
+    codelimit = '```'
+
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
         return self.to_notebook(s, **kwargs)
@@ -32,7 +35,7 @@ class MarkdownReader(NotebookReader):
         for line in lines:
             # if we aren't already in code and we get ```, this is the start
             # of a code block
-            if line.startswith('```') and state != self.code:
+            if line.startswith(self.codelimit) and state != self.code:
                 # write the existing lines to a new cell and empty the list
                 # of lines
                 cell = self.new_cell(state, cell_lines, **kwargs)
@@ -44,7 +47,7 @@ class MarkdownReader(NotebookReader):
 
             # if we are already in code and we get ```, this is the end of a
             # code block
-            elif line.startswith('```') and state == self.code:
+            elif line.startswith(self.codelimit) and state == self.code:
                 cell = self.new_cell(state, cell_lines, **kwargs)
                 if cell is not None:
                     cells.append(cell)
