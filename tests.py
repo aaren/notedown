@@ -1,5 +1,19 @@
 import notedown
 
+simple_markdown = """```
+code1
+```
+text1
+
+```
+code2
+```
+
+text2"""
+
+simple_code_cells = ['code1', 'code2']
+simple_markdown_cells = ['text1', 'text2']
+
 sample_markdown = u"""### Create IPython Notebooks from markdown
 
 This is a simple tool to convert markdown with code into an IPython
@@ -97,3 +111,28 @@ def create_json_notebook():
 def test_notedown():
     """Integration test the whole thing."""
     assert(create_json_notebook() == sample_notebook)
+
+
+def parse_cells(text):
+    reader = notedown.MarkdownReader()
+    return reader.parse_blocks(text)
+
+
+def separate_code_cells(cells):
+    codetype = notedown.MarkdownReader.code
+    code_cells = [c['content'] for c in cells if c['type'] == codetype]
+    return code_cells
+
+
+def separate_markdown_cells(cells):
+    markdowntype = notedown.MarkdownReader.markdown
+    markdown_cells = [c['content'] for c in cells if c['type'] == markdowntype]
+    return markdown_cells
+
+
+def test_parse_gfm():
+    all_cells = parse_cells(simple_markdown)
+    code_cells = separate_code_cells(all_cells)
+    markdown_cells = separate_markdown_cells(all_cells)
+    assert(code_cells == simple_code_cells)
+    assert(markdown_cells == simple_markdown_cells)

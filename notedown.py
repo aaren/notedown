@@ -1,3 +1,4 @@
+import re
 import sys
 import argparse
 
@@ -12,66 +13,100 @@ class MarkdownReader(NotebookReader):
     code and markdown. The code must be formatted as in Github
     Flavoured Markdown.
     """
-    # state identifiers
-    code = u'codecell'
-    markdown = u'markdowncell'
+    # type identifiers
+    code = u'code'
+    markdown = u'markdown'
 
-    # delimiter for code cells
-    codelimit = '```'
+    # regex to match a code block, splitting into groups
+    gfm_regex = r"""
+    \n*                  # any number of newlines
+    ^```+                # followed by a line starting with 3 or more `
+    (?P<options>         # start a group 'options'
+    .*?)                 # that includes any number of characters,
+    \n                   # followed by a newline
+    (?P<content>         # start a group 'content'
+    [\s\S]*?)            # that includes anything
+    \n                   # until we get to a newline followed by
+    ```+$                # 3 or more backticks
+    \n*                  # followed by any number of newlines
+    """
+
+    def __init__(self, code_regex=None):
+        """
+            code_regex - a regular expression that matches code blocks in
+                         markdown text.
+        """
+        self.code_regex = code_regex or self.gfm_regex
 
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
         return self.to_notebook(s, **kwargs)
 
     def to_notebook(self, s, **kwargs):
-        """Convert the string s to an IPython notebook.
+        """Convert the markdown string s to an IPython notebook.
 
         Returns a notebook.
         """
-        lines = s.splitlines()
+        all_blocks = self.parse_blocks(s)
+
         cells = []
-        cell_lines = []
-        kwargs = {}
+        for block in all_blocks:
+            if block['type'] == self.code:
+                kwargs = {'input': block['content'],
+                          'language': u'python'}
 
-        state = self.markdown
+                code_cell = nbbase.new_code_cell(**kwargs)
+                cells.append(code_cell)
+            elif block['type'] == self.markdown:
+                kwargs = {'cell_type': block['type'],
+                          'source': block['content']}
 
-        for line in lines:
-            # if we aren't already in code and we get ```, this is the start
-            # of a code block
-            if line.startswith(self.codelimit) and state != self.code:
-                # write the existing lines to a new cell and empty the list
-                # of lines
-                cell = self.new_cell(state, cell_lines, **kwargs)
-                if cell is not None:
-                    cells.append(cell)
-                cell_lines = []
-                # the state must now be code as we are in a code block
-                state = self.code
-
-            # if we are already in code and we get ```, this is the end of a
-            # code block
-            elif line.startswith(self.codelimit) and state == self.code:
-                cell = self.new_cell(state, cell_lines, **kwargs)
-                if cell is not None:
-                    cells.append(cell)
-                cell_lines = []
-                # the state must now be markdown as we have finished a code
-                # block
-                state = self.markdown
-
-            else:
-                cell_lines.append(line)
-
-        # finish up by adding the remainder to a new cell
-        if cell_lines and state == self.markdown:
-            cell = self.new_cell(state, cell_lines)
-            if cell is not None:
-                cells.append(cell)
+                markdown_cell = nbbase.new_text_cell(**kwargs)
+                cells.append(markdown_cell)
 
         ws = nbbase.new_worksheet(cells=cells)
         nb = nbbase.new_notebook(worksheets=[ws])
 
         return nb
+
+    def parse_blocks(self, text):
+        """Extract the code and non-code blocks from given markdown text.
+
+        Returns a list of block dictionaries.
+
+        Each dictionary has at least the keys 'type' and 'content',
+        containing the type of the block ('markdown', 'code') and
+        the contents of the block.
+
+        Additional keys may be parsed as well.
+        """
+        code_pattern = re.compile(self.code_regex, re.MULTILINE | re.VERBOSE)
+        code_matches = [m for m in code_pattern.finditer(text)]
+
+        # determine where the limits of the non code bits are
+        # based on the code block edges
+        text_starts = [0] + [m.end() for m in code_matches]
+        text_stops = [m.start() for m in code_matches] + [len(text)]
+        text_limits = zip(text_starts, text_stops)
+
+        # list of the groups from the code blocks
+        code_blocks = [m.groupdict() for m in code_matches]
+        # update with a type field
+        code_blocks = [dict(d.items() + [('type', self.code)]) for d in
+                                                                   code_blocks]
+
+        text_blocks = [{'content': text[i:j], 'type': self.markdown} for i, j
+                                                                in text_limits]
+
+        all_blocks = range(len(text_blocks) + len(code_blocks))
+
+        # cells must alternate in order
+        all_blocks[::2] = text_blocks
+        all_blocks[1::2] = code_blocks
+
+        # remove possible empty first, last text cells
+        all_blocks = [cell for cell in all_blocks if cell['content']]
+        return all_blocks
 
     def new_cell(self, state, lines, **kwargs):
         """Create a new notebook cell with the given state as the type
