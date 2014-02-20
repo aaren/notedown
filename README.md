@@ -42,3 +42,4 @@ Converting from an IPython notebook to markdown is done using
 
 - [ ] support more markdowns
 - [ ] allow other cell types?
+- [ ] allow different language code cells (using %%lang magic)
