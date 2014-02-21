@@ -17,7 +17,8 @@ class MarkdownReader(NotebookReader):
     code = u'code'
     markdown = u'markdown'
 
-    # regex to match a code block, splitting into groups
+    # regexes to match a code block, splitting into groups
+    # fenced code
     fenced_regex = r"""
     \n*                     # any number of newlines
     ^(?P<fence>`{3,}|~{3,}) # followed by a line starting with 3 or more ` or ~
@@ -31,12 +32,30 @@ class MarkdownReader(NotebookReader):
     \n*                     # followed by any number of newlines
     """
 
-    def __init__(self, code_regex=None):
+    # indented code
+    indented_regex = r"""
+    \n*                        # any number of newlines
+    (?P<content>               # start group 'content'
+    (?P<indent>^([ ]{4,}|\t))  # an indent of at least four spaces or one tab
+    [\s\S]*?)                  # any code
+    \n*                        # any number of newlines
+    ^(?!(?P=indent))           # stop when there is a line without at least
+                               # the indent of the first one
+    """
+
+    def __init__(self, code_regex='fenced'):
         """
-            code_regex - a regular expression that matches code blocks in
-                         markdown text.
+            code_regex - Either 'fenced' or 'indented' or
+                         a regular expression that matches code blocks in
+                         markdown text. Will be passed to re.compile with
+                         re.VERBOSE and re.MULTILINE flags.
         """
-        self.code_regex = code_regex or self.fenced_regex
+        if code_regex == 'fenced':
+            self.code_regex = self.fenced_regex
+        elif code_regex == 'indented':
+            self.code_regex = self.indented_regex
+        else:
+            self.code_regex = code_regex
 
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
@@ -94,6 +113,13 @@ class MarkdownReader(NotebookReader):
         # update with a type field
         code_blocks = [dict(d.items() + [('type', self.code)]) for d in
                                                                    code_blocks]
+        # dedent if has indent
+        for block in code_blocks:
+            if 'indent' in block:
+                indent = r"^" + block['indent']
+                content = block['content'].splitlines()
+                dedented = [re.sub(indent, '', line) for line in content]
+                block['content'] = '\n'.join(dedented)
 
         text_blocks = [{'content': text[i:j], 'type': self.markdown} for i, j
                                                                 in text_limits]

@@ -2,12 +2,14 @@ import notedown
 
 simple_backtick = """```
 code1
+    space_indent
 ```
 text1
 ``
 
 ```
 code2
+	tab_indent
 ~~~
 ```
 
@@ -15,18 +17,31 @@ text2"""
 
 simple_tilde = """~~~
 code1
+    space_indent
 ~~~
 text1
 ``
 
 ~~~~
 code2
+	tab_indent
 ~~~
 ~~~~
 
 text2"""
 
-simple_code_cells = ['code1', 'code2\n~~~']
+simple_indented = """    code1
+        space_indent
+
+text1
+``
+	code2
+		tab_indent
+	~~~
+
+text2"""
+
+simple_code_cells = ['code1\n    space_indent', 'code2\n	tab_indent\n~~~']
 simple_markdown_cells = ['text1\n``', 'text2']
 
 sample_markdown = u"""### Create IPython Notebooks from markdown
@@ -128,8 +143,8 @@ def test_notedown():
     assert(create_json_notebook() == sample_notebook)
 
 
-def parse_cells(text):
-    reader = notedown.MarkdownReader()
+def parse_cells(text, regex):
+    reader = notedown.MarkdownReader(code_regex=regex)
     return reader.parse_blocks(text)
 
 
@@ -147,7 +162,7 @@ def separate_markdown_cells(cells):
 
 def test_parse_gfm():
     """Test with GFM code blocks."""
-    all_cells = parse_cells(simple_backtick)
+    all_cells = parse_cells(simple_backtick, 'fenced')
 
     code_cells = separate_code_cells(all_cells)
     markdown_cells = separate_markdown_cells(all_cells)
@@ -158,7 +173,18 @@ def test_parse_gfm():
 
 def test_parse_tilde():
     """Test with ~~~ delimited code blocks."""
-    all_cells = parse_cells(simple_tilde)
+    all_cells = parse_cells(simple_tilde, 'fenced')
+
+    code_cells = separate_code_cells(all_cells)
+    markdown_cells = separate_markdown_cells(all_cells)
+
+    assert(code_cells == simple_code_cells)
+    assert(markdown_cells == simple_markdown_cells)
+
+
+def test_parse_indented():
+    """Test with indented code blocks."""
+    all_cells = parse_cells(simple_indented, 'indented')
 
     code_cells = separate_code_cells(all_cells)
     markdown_cells = separate_markdown_cells(all_cells)
