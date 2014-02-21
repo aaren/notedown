@@ -165,11 +165,15 @@ def cli():
                                      epilog=example_use)
     parser.add_argument('input_file',
                         help="markdown input file",)
+    parser.add_argument('--code_block',
+                        help=("'fenced' (default), 'indented' or an arbitrary"
+                              "regular expression to match code blocks."),
+                        default='fenced')
 
     args = parser.parse_args()
 
     with open(args.input_file, 'r') as ip, sys.stdout as op:
-        reader = MarkdownReader()
+        reader = MarkdownReader(code_regex=args.code_block)
         writer = JSONWriter()
         notebook = reader.read(ip)
         writer.write(notebook, op)
