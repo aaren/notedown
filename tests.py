@@ -1,18 +1,33 @@
 import notedown
 
-simple_markdown = """```
+simple_backtick = """```
 code1
 ```
 text1
+``
 
 ```
 code2
+~~~
 ```
 
 text2"""
 
-simple_code_cells = ['code1', 'code2']
-simple_markdown_cells = ['text1', 'text2']
+simple_tilde = """~~~
+code1
+~~~
+text1
+``
+
+~~~~
+code2
+~~~
+~~~~
+
+text2"""
+
+simple_code_cells = ['code1', 'code2\n~~~']
+simple_markdown_cells = ['text1\n``', 'text2']
 
 sample_markdown = u"""### Create IPython Notebooks from markdown
 
@@ -131,8 +146,22 @@ def separate_markdown_cells(cells):
 
 
 def test_parse_gfm():
-    all_cells = parse_cells(simple_markdown)
+    """Test with GFM code blocks."""
+    all_cells = parse_cells(simple_backtick)
+
     code_cells = separate_code_cells(all_cells)
     markdown_cells = separate_markdown_cells(all_cells)
+
+    assert(code_cells == simple_code_cells)
+    assert(markdown_cells == simple_markdown_cells)
+
+
+def test_parse_tilde():
+    """Test with ~~~ delimited code blocks."""
+    all_cells = parse_cells(simple_tilde)
+
+    code_cells = separate_code_cells(all_cells)
+    markdown_cells = separate_markdown_cells(all_cells)
+
     assert(code_cells == simple_code_cells)
     assert(markdown_cells == simple_markdown_cells)

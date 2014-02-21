@@ -18,17 +18,17 @@ class MarkdownReader(NotebookReader):
     markdown = u'markdown'
 
     # regex to match a code block, splitting into groups
-    gfm_regex = r"""
-    \n*                  # any number of newlines
-    ^```+                # followed by a line starting with 3 or more `
-    (?P<options>         # start a group 'options'
-    .*?)                 # that includes any number of characters,
-    \n                   # followed by a newline
-    (?P<content>         # start a group 'content'
-    [\s\S]*?)            # that includes anything
-    \n                   # until we get to a newline followed by
-    ```+$                # 3 or more backticks
-    \n*                  # followed by any number of newlines
+    fenced_regex = r"""
+    \n*                     # any number of newlines
+    ^(?P<fence>`{3,}|~{3,}) # followed by a line starting with 3 or more ` or ~
+    (?P<options>            # start a group 'options'
+    .*?)                    # that includes any number of characters,
+    \n                      # followed by a newline
+    (?P<content>            # start a group 'content'
+    [\s\S]*?)               # that includes anything
+    \n                      # until we get to a newline followed by
+    (?P=fence)$             # the same number of `|~ as we started with
+    \n*                     # followed by any number of newlines
     """
 
     def __init__(self, code_regex=None):
@@ -36,7 +36,7 @@ class MarkdownReader(NotebookReader):
             code_regex - a regular expression that matches code blocks in
                          markdown text.
         """
-        self.code_regex = code_regex or self.gfm_regex
+        self.code_regex = code_regex or self.fenced_regex
 
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
