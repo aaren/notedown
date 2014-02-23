@@ -16,19 +16,21 @@ class MarkdownReader(NotebookReader):
     ## type identifiers
     code = u'code'
     markdown = u'markdown'
+    python = u'python'
 
     ## regular expressions to match a code block, splitting into groups
     # fenced code
     fenced_regex = r"""
-    \n*                     # any number of newlines
-    ^(?P<fence>`{3,}|~{3,}) # followed by a line starting with 3 or more ` or ~
-    (?P<options>            # start a group 'options'
-    .*?)                    # that includes any number of characters,
+    \n*                     # any number of newlines followed by
+    ^(?P<fence>`{3,}|~{3,}) # a line starting with a fence of 3 or more ` or ~
+    (?P<language>           # followed by the group 'language',
+    [\w+-]*)                # a word of alphanumerics, _, - or +
+    [ ]*                    # followed by spaces
+    (?P<options>.*)         # followed by any text
     \n                      # followed by a newline
     (?P<content>            # start a group 'content'
     [\s\S]*?)               # that includes anything
-    \n                      # until we get to a newline followed by
-    (?P=fence)$             # the same number of `|~ as we started with
+    \n(?P=fence)$           # up until the same fence that we started with
     \n*                     # followed by any number of newlines
     """
 
@@ -57,6 +59,8 @@ class MarkdownReader(NotebookReader):
         else:
             self.code_regex = code_regex
 
+        self.code_pattern = re.compile(self.code_regex, re.MULTILINE | re.VERBOSE)
+
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
         return self.to_notebook(s, **kwargs)
@@ -72,16 +76,21 @@ class MarkdownReader(NotebookReader):
         for block in all_blocks:
             if block['type'] == self.code:
                 kwargs = {'input': block['content'],
-                          'language': u'python'}
+                          'language': block['language']}
 
                 code_cell = nbbase.new_code_cell(**kwargs)
                 cells.append(code_cell)
+
             elif block['type'] == self.markdown:
                 kwargs = {'cell_type': block['type'],
                           'source': block['content']}
 
                 markdown_cell = nbbase.new_text_cell(**kwargs)
                 cells.append(markdown_cell)
+
+            else:
+                raise NotImplementedError("{} is not supported as a cell"
+                                          "type".format(block['type']))
 
         ws = nbbase.new_worksheet(cells=cells)
         nb = nbbase.new_notebook(worksheets=[ws])
@@ -99,8 +108,7 @@ class MarkdownReader(NotebookReader):
 
         Additional keys may be parsed as well.
         """
-        code_pattern = re.compile(self.code_regex, re.MULTILINE | re.VERBOSE)
-        code_matches = [m for m in code_pattern.finditer(text)]
+        code_matches = [m for m in self.code_pattern.finditer(text)]
 
         # determine where the limits of the non code bits are
         # based on the code block edges
@@ -113,13 +121,9 @@ class MarkdownReader(NotebookReader):
         # update with a type field
         code_blocks = [dict(d.items() + [('type', self.code)]) for d in
                                                                    code_blocks]
-        # dedent if has indent
-        for block in code_blocks:
-            if 'indent' in block:
-                indent = r"^" + block['indent']
-                content = block['content'].splitlines()
-                dedented = [re.sub(indent, '', line) for line in content]
-                block['content'] = '\n'.join(dedented)
+
+        # remove indents, add code magic, etc.
+        map(self.pre_process_code_block, code_blocks)
 
         text_blocks = [{'content': text[i:j], 'type': self.markdown} for i, j
                                                                 in text_limits]
@@ -136,27 +140,27 @@ class MarkdownReader(NotebookReader):
 
         return all_blocks
 
-    def new_cell(self, state, lines, **kwargs):
-        """Create a new notebook cell with the given state as the type
-        and the given lines as the content.
-
-        Returns a cell.
+    def pre_process_code_block(self, block):
+        """Preprocess the content of a code block.
+        Modifies the code block in place.
         """
-        if state == self.code:
-            input = u'\n'.join(lines)
-            input = input.strip(u'\n')
-            if input:
-                return nbbase.new_code_cell(input=input)
+        # dedent indented code blocks
+        if 'indent' in block:
+            indent = r"^" + block['indent']
+            content = block['content'].splitlines()
+            dedented = [re.sub(indent, '', line) for line in content]
+            block['content'] = '\n'.join(dedented)
 
-        elif state == self.markdown:
-            text = u'\n'.join(lines)
-            text = text.strip(u'\n')
-            if text:
-                return nbbase.new_text_cell(u'markdown', source=text)
+        # alternate descriptions for python code
+        python_aliases = ['python', 'py', '']
+        # ensure one identifier for python code
+        if 'language' in block and block['language'] in python_aliases:
+            block['language'] = self.python
 
-        else:
-            raise NotImplementedError("{state} is not supported as a"
-                                      "cell type".format(state=state))
+        # add alternate language execution magic
+        if 'language' in block and block['language'] != self.python:
+            code_magic = "%%{}\n".format(block['language'])
+            block['content'] = code_magic + block['content']
 
 
 def cli():
@@ -168,7 +172,7 @@ def cli():
     parser.add_argument('input_file',
                         help="markdown input file",)
     parser.add_argument('--code_block',
-                        help=("'fenced' (default), 'indented' or an arbitrary"
+                        help=("'fenced' (default), 'indented' or an arbitrary "
                               "regular expression to match code blocks."),
                         default='fenced')
 

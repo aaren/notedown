@@ -1,6 +1,7 @@
 import notedown
 
-simple_backtick = """```
+simple_backtick = """
+```
 code1
     space_indent
 ```
@@ -15,7 +16,8 @@ code2
 
 text2"""
 
-simple_tilde = """~~~
+simple_tilde = """
+~~~
 code1
     space_indent
 ~~~
@@ -30,7 +32,8 @@ code2
 
 text2"""
 
-simple_indented = """    code1
+simple_indented = """
+    code1
         space_indent
 
 text1
@@ -43,6 +46,17 @@ text2"""
 
 simple_code_cells = ['code1\n    space_indent', 'code2\n	tab_indent\n~~~']
 simple_markdown_cells = ['text1\n``', 'text2']
+
+alt_lang = """
+This is how you write a code block in another language:
+
+```bash
+echo "This is bash ${BASH_VERSION}!"
+```
+"""
+
+alt_lang_code = '%%bash\necho "This is bash ${BASH_VERSION}!"'
+
 
 sample_markdown = u"""### Create IPython Notebooks from markdown
 
@@ -191,3 +205,13 @@ def test_parse_indented():
 
     assert(code_cells == simple_code_cells)
     assert(markdown_cells == simple_markdown_cells)
+
+
+def test_alt_lang():
+    """Specifying a language that isn't python should generate
+    code blocks using %%language magic."""
+    all_cells = parse_cells(alt_lang, 'fenced')
+
+    code_cells = separate_code_cells(all_cells)
+
+    assert(code_cells[0] == alt_lang_code)
