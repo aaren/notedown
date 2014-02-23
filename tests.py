@@ -75,9 +75,8 @@ code. Code goes into code cells, not-code goes into markdown cells.
 
 Installation:
 
-```
-pip install notedown
-```"""
+    pip install notedown
+"""
 
 # Generate the sample notebook from the markdown using
 #
@@ -215,3 +214,19 @@ def test_alt_lang():
     code_cells = separate_code_cells(all_cells)
 
     assert(code_cells[0] == alt_lang_code)
+
+
+def test_format_agnostic():
+    """Test whether we can process markdown with either fenced or
+    indented blocks."""
+    fenced_cells = parse_cells(simple_backtick, None)
+    indented_cells = parse_cells(simple_indented, None)
+
+    fenced_code_cells = separate_code_cells(fenced_cells)
+    indented_code_cells = separate_code_cells(indented_cells)
+
+    fenced_markdown_cells = separate_markdown_cells(fenced_cells)
+    indented_markdown_cells = separate_markdown_cells(indented_cells)
+
+    assert(fenced_code_cells == indented_code_cells)
+    assert(fenced_markdown_cells == indented_markdown_cells)

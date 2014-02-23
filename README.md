@@ -68,3 +68,4 @@ You can run notebooks non-interactively from the command line using
 - [ ] allow other cell types?
 - [x] allow different language code cells (using %%lang magic)
 - [ ] allow code attributes? pass to cell creator?
+- [x] code block format agnostic (fenced / indented)

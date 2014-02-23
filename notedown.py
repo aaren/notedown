@@ -19,6 +19,12 @@ class MarkdownReader(NotebookReader):
     python = u'python'
 
     ## regular expressions to match a code block, splitting into groups
+    ## N.B you can't share group names between these patterns.
+    ## this is necessary for format agnostic code block detection.
+    ## These two pattern strings are ORed to create a master pattern
+    ## and the python re module doesn't allow sharing group names
+    ## in a single regular expression.
+
     # fenced code
     fenced_regex = r"""
     \n*                     # any number of newlines followed by
@@ -37,7 +43,7 @@ class MarkdownReader(NotebookReader):
     # indented code
     indented_regex = r"""
     \n*                        # any number of newlines
-    (?P<content>               # start group 'content'
+    (?P<icontent>              # start group 'icontent'
     (?P<indent>^([ ]{4,}|\t))  # an indent of at least four spaces or one tab
     [\s\S]*?)                  # any code
     \n*                        # any number of newlines
@@ -45,21 +51,28 @@ class MarkdownReader(NotebookReader):
                                # the indent of the first one
     """
 
-    def __init__(self, code_regex='fenced'):
+    def __init__(self, code_regex=None):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
                          markdown text. Will be passed to re.compile with
                          re.VERBOSE and re.MULTILINE flags.
+
+                         Default is to look for both indented and fenced
+                         code blocks.
         """
-        if code_regex == 'fenced':
+        if not code_regex:
+            self.code_regex = r"({}|{})".format(self.fenced_regex,
+                                                self.indented_regex)
+        elif code_regex == 'fenced':
             self.code_regex = self.fenced_regex
         elif code_regex == 'indented':
             self.code_regex = self.indented_regex
         else:
             self.code_regex = code_regex
 
-        self.code_pattern = re.compile(self.code_regex, re.MULTILINE | re.VERBOSE)
+        re_flags = re.MULTILINE | re.VERBOSE
+        self.code_pattern = re.compile(self.code_regex, re_flags)
 
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
@@ -144,15 +157,18 @@ class MarkdownReader(NotebookReader):
         """Preprocess the content of a code block.
         Modifies the code block in place.
         """
+        # homogenise content attribute of fenced and indented blocks
+        block['content'] = block.get('content') or block['icontent']
+
         # dedent indented code blocks
-        if 'indent' in block:
+        if 'indent' in block and block['indent']:
             indent = r"^" + block['indent']
             content = block['content'].splitlines()
             dedented = [re.sub(indent, '', line) for line in content]
             block['content'] = '\n'.join(dedented)
 
         # alternate descriptions for python code
-        python_aliases = ['python', 'py', '']
+        python_aliases = ['python', 'py', '', None]
         # ensure one identifier for python code
         if 'language' in block and block['language'] in python_aliases:
             block['language'] = self.python
@@ -172,9 +188,11 @@ def cli():
     parser.add_argument('input_file',
                         help="markdown input file",)
     parser.add_argument('--code_block',
-                        help=("'fenced' (default), 'indented' or an arbitrary "
-                              "regular expression to match code blocks."),
-                        default='fenced')
+                        help=("choose to match only 'fenced' or 'indented' "
+                              "code blocks or give a regular expression to "
+                              "match code blocks. Default is to match both "
+                              "fenced and indented code blocks."),
+                        default=None)
 
     args = parser.parse_args()
 
