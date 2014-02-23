@@ -1,12 +1,10 @@
 from setuptools import setup
 
-# create __version__
-exec(open('./_version.py').read())
-
 setup(
     name="notedown",
-    version=__version__,
+    version='1.0.3',
     description="Convert markdown to IPython notebook.",
+    packages=['notedown'],
     author="Aaron O'Leary",
     author_email='dev@aaren.me',
     url='http://github.com/aaren/notedown',
