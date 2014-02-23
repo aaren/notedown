@@ -13,11 +13,11 @@ class MarkdownReader(NotebookReader):
     code and markdown. The code must be formatted as in Github
     Flavoured Markdown.
     """
-    # type identifiers
+    ## type identifiers
     code = u'code'
     markdown = u'markdown'
 
-    # regexes to match a code block, splitting into groups
+    ## regular expressions to match a code block, splitting into groups
     # fenced code
     fenced_regex = r"""
     \n*                     # any number of newlines
@@ -124,6 +124,7 @@ class MarkdownReader(NotebookReader):
         text_blocks = [{'content': text[i:j], 'type': self.markdown} for i, j
                                                                 in text_limits]
 
+        # create a list of the right length
         all_blocks = range(len(text_blocks) + len(code_blocks))
 
         # cells must alternate in order
@@ -132,6 +133,7 @@ class MarkdownReader(NotebookReader):
 
         # remove possible empty first, last text cells
         all_blocks = [cell for cell in all_blocks if cell['content']]
+
         return all_blocks
 
     def new_cell(self, state, lines, **kwargs):
