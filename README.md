@@ -11,8 +11,7 @@ Usage:
 
 It is really simple and separates your markdown into code and not
 code. Code goes into code cells, not-code goes into markdown cells.
-Currently only works with Github Flavored Markdown (code-cells
-marked with \`\`\`).
+Works with both fenced and indented code blocks.
 
 Installation:
 
@@ -40,6 +39,6 @@ Converting from an IPython notebook to markdown is done using
 
 ### TODO
 
-- [ ] support more markdowns
+- [x] support more markdowns
 - [ ] allow other cell types?
 - [ ] allow different language code cells (using %%lang magic)
