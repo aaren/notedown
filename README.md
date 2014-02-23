@@ -1,7 +1,7 @@
 Create IPython Notebooks from markdown
 --------------------------------------
 
-This is a simple tool to create [IPython notebooks][ipython]
+[notedown] is a simple tool to create [IPython notebooks][ipython]
 from markdown.
 
 [ipython]: http://www.ipython.org/notebook
@@ -19,10 +19,10 @@ Installation:
 It is really simple and separates your markdown into code and not
 code. Code goes into code cells, not-code goes into markdown cells.
 
-notedown works with both fenced (default) and indented code blocks. 
+Fenced code blocks annotated with a language other than python are
+read into cells using IPython's `%%` [cell magic][].
 
-Non-python code blocks are read into cells using IPython's alternate
-language magic.
+[cell magic]: http://nbviewer.ipython.org/github/ipython/ipython/blob/1.x/examples/notebooks/Cell%20Magics.ipynb
 
 
 ### Why?
@@ -30,7 +30,7 @@ language magic.
 I don't know. Maybe you prefer writing in markdown.
 
 
-### What `notedown` does **not** do:
+### What notedown does **not** do:
 
 - run code cells
 - embed figures
@@ -43,8 +43,9 @@ Converting from an IPython notebook to markdown is done using
 
     ipython nbconvert notebook.ipynb --to markdown
 
-This is currently quite basic, so you can't expect to convert markdown ->
-notebook -> markdown and get back your original markdown.
+The IPython markdown export is currently quite basic, so you can't
+expect to convert markdown -> notebook -> markdown and get back your
+original markdown.
 
 
 ### Running an IPython Notebook
