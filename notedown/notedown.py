@@ -186,7 +186,14 @@ def cli():
     parser = argparse.ArgumentParser(description=description,
                                      epilog=example_use)
     parser.add_argument('input_file',
-                        help="markdown input file",)
+                        help="markdown input file (default STDIN)",
+                        nargs="?",
+                        type=argparse.FileType('r'),
+                        default=sys.stdin)
+    parser.add_argument('--output',
+                        help="output file, (default STDOUT)",
+                        type=argparse.FileType('w'),
+                        default=sys.stdout)
     parser.add_argument('--code_block',
                         help=("choose to match only 'fenced' or 'indented' "
                               "code blocks or give a regular expression to "
@@ -196,7 +203,7 @@ def cli():
 
     args = parser.parse_args()
 
-    with open(args.input_file, 'r') as ip, sys.stdout as op:
+    with args.input_file as ip, args.output as op:
         reader = MarkdownReader(code_regex=args.code_block)
         writer = JSONWriter()
         notebook = reader.read(ip)
