@@ -204,6 +204,11 @@ def cli():
     args = parser.parse_args()
 
     with args.input_file as ip, args.output as op:
+        # if no stdin and no input file
+        if args.input_file.isatty():
+            parser.print_help()
+            exit()
+
         reader = MarkdownReader(code_regex=args.code_block)
         writer = JSONWriter()
         notebook = reader.read(ip)
