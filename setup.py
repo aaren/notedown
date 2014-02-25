@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="notedown",
-    version='1.0.3',
+    version='1.0.4dev',
     description="Convert markdown to IPython notebook.",
     packages=['notedown'],
     author="Aaron O'Leary",
