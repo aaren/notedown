@@ -27,7 +27,9 @@ read into cells using IPython's `%%` [cell magic][].
 
 ### Why?
 
-I don't know. Maybe you prefer writing in markdown.
+*Save yourself* from the *indignity* of writing **text** in the browser!
+
+There might be more reasons, but that was the main one for me.
 
 
 ### What notedown does **not** do:
