@@ -32,6 +32,7 @@ I don't know. Maybe you prefer writing in markdown.
 
 ### What notedown does **not** do:
 
+- convert from notebook to markdown
 - run code cells
 - embed figures
 
@@ -62,6 +63,75 @@ You can run notebooks non-interactively from the command line using
     pip install runipy
     runipy your_notebook.ipynb
 
+
+
+### This isn't very interactive!
+
+No, it isn't. Notedown takes markdown and turns it into an IPython
+notebook.
+
+You can set up a pseudo-interactive loop in Vim by calling
+
+```viml
+:!notedown %s > out.ipynb
+```
+
+and viewing the result in the browser with
+
+```bash
+ipython notebook out.ipynb
+```
+
+You'll get far better interactivity by **using [vim-ipython]**,
+which allows you to connect to a running ipython kernel. You can
+send code from vim to ipython and get code completion from the
+running kernel. Try it!
+
+[vim-ipython]: http://www.github.com/ivanov/vim-ipython
+
+Here are some mappings for your vimrc to make this pleasant:
+    
+```viml
+" Very useful mappings to be used with markdown and ipython
+" search and select contents of fenced code blocks using <leader>f
+nnoremap <leader>f /\v(\_^```python\n)@<=(\_.{-})(\n`{3}\_$)@=<CR>v//e<CR>
+" goto the start of the current fenced code block with [b
+" (see :help search)
+nnoremap [b :call search('\n```python', 'b')<CR>
+" select current code block with <leader>b
+" TODO: use <leader> instead of ,
+" TODO: cancel highlighting
+nmap <leader>b [b,f
+" (or could do [b0v/\n```)
+" send current code block to ipython with <leader>p
+nmap <leader>p ,b<C-s>
+```
+
+
+### Where's my syntax highlighting?!
+
+You can syntax highlight python code contained in fenced code blocks
+with this command (put it in your vimrc):
+
+```viml
+function! HiPy ()
+    let b:current_syntax=''
+    unlet b:current_syntax
+    syntax include @py syntax/python.vim
+    " github flavoured markdown (code blocks fenced with ```)
+    syntax region gfmpythoncode keepend start="^\s*\n^\s*```py.*$" end=/^\s*```$\n/ contains=@py
+endfunction
+
+" enable highlighting of fenced python code with <leader>h
+map <leader>h :call HiPy ()<CR>
+```
+
+BONUS! Of course you can do the same for latex:
+
+```viml
+syntax include syntax/tex.vim
+syn region texdisplaymaths start="\$\$" end="\$\$" skip="\\\$" contains=@texMathZoneGroup
+```
 
 ### TODO
 
