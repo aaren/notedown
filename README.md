@@ -101,8 +101,8 @@ nnoremap <leader>f /\v(\_^```python\n)@<=(\_.{-})(\n`{3}\_$)@=<CR>v//e<CR>
 " (see :help search)
 nnoremap [b :call search('\n```python', 'b')<CR>
 " select current code block with <leader>b
-" TODO: use <leader> instead of ,
-" TODO: cancel highlighting
+" TODO: assumes <leader>==, use <leader>f instead of ,f
+" TODO: cancel search highlighting
 nmap <leader>b [b,f
 " (or could do [b0v/\n```)
 " send current code block to ipython with <leader>p
