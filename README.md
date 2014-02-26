@@ -60,11 +60,16 @@ You can open the notebook in your browser with
 and use `Cell -> Run all` in the menu.
 
 You can run notebooks non-interactively from the command line using
-[runipy][]:
+[runipy]:
 
     pip install runipy
     runipy your_notebook.ipynb
 
+Or, if you're using IPython 2.0:
+
+    ipython -c "%run your_notebook.ipynb"
+
+[runipy]: https://github.com/paulgb/runipy
 
 
 ### This isn't very interactive!
