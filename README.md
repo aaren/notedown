@@ -128,11 +128,22 @@ endfunction
 map <leader>h :call HiPy ()<CR>
 ```
 
-BONUS! Of course you can do the same for latex:
+BONUS! Of course you can do the same for latex display and inline maths:
 
 ```viml
 syntax include syntax/tex.vim
+" display maths with $$ ... $$
 syn region texdisplaymaths start="\$\$" end="\$\$" skip="\\\$" contains=@texMathZoneGroup
+" inline maths with $ ... $
+" start is a $ not preceded by another $        - \(\$\)\@<!\$
+" and not preceded by a \ (concat)              - \(\$\)\@<!\&\(\\\)\@<!\$
+" and not followed by another $                 - \$\(\$\)\@!
+" ending in a $ not preceded by a \             - \((\$\)\@<!\$
+" skipping any \$                               - \\\$
+" see :help \@<! for more
+syn region texinlinemaths start="\(\$\)\@<!\&\(\\\)\@<!\$\(\$\)\@!" end="\(\$\)\@<!\$" skip="\\\$" contains=@texMathZoneGroup
+" restriction is that you can't have something like \$$maths$ - there
+" has to be a space after all of the \$ (literal $)
 ```
 
 ### TODO
