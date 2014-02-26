@@ -7,6 +7,7 @@ setup(
     packages=['notedown'],
     author="Aaron O'Leary",
     author_email='dev@aaren.me',
+    license='BSD 2-Clause',
     url='http://github.com/aaren/notedown',
     install_requires=['ipython', ],
     entry_points={
