@@ -120,6 +120,9 @@ class MarkdownReader(NotebookReader):
         the contents of the block.
 
         Additional keys may be parsed as well.
+
+        We should switch to an external markdown library if this
+        gets much more complicated!
         """
         code_matches = [m for m in self.code_pattern.finditer(text)]
 
@@ -197,7 +200,9 @@ def cli():
     parser.add_argument('--code_block',
                         help=("choose to match only 'fenced' or 'indented' "
                               "code blocks or give a regular expression to "
-                              "match code blocks. Default is to match both "
+                              "match code blocks. Will be compiled with "
+                              "re.MULTILINE | re.VERBOSE."
+                              "Default is to match both "
                               "fenced and indented code blocks."),
                         default=None)
 
