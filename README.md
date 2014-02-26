@@ -121,7 +121,7 @@ function! HiPy ()
     unlet b:current_syntax
     syntax include @py syntax/python.vim
     " github flavoured markdown (code blocks fenced with ```)
-    syntax region gfmpythoncode keepend start="^\s*\n^\s*```py.*$" end=/^\s*```$\n/ contains=@py
+    syntax region gfmpythoncode keepend start="^```py.*$" end=/^\s*```$\n/ contains=@py
 endfunction
 
 " enable highlighting of fenced python code with <leader>h
