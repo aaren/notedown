@@ -158,4 +158,3 @@ syn region texinlinemaths start="\(\$\)\@<!\&\(\\\)\@<!\$\(\$\)\@!" end="\(\$\)\
 - [x] allow different language code cells (using %%lang magic)
 - [ ] allow code attributes? pass to cell creator?
 - [x] code block format agnostic (fenced / indented)
-- [ ] add an example .md / .ipynb to demo input / output
