@@ -89,7 +89,7 @@ and viewing the result in the browser with
 ipython notebook out.ipynb
 ```
 
-You'll get far better interactivity by **using [vim-ipython]**,
+You'll get far better interactivity by using [vim-ipython],
 which allows you to connect to a running ipython kernel. You can
 send code from vim to ipython and get code completion from the
 running kernel. Try it!
