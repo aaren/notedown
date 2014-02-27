@@ -157,8 +157,14 @@ class MarkdownReader(NotebookReader):
         return all_blocks
 
     def pre_process_code_block(self, block):
-        """Preprocess the content of a code block.
-        Modifies the code block in place.
+        """Preprocess the content of a code block, modifying the code
+        block in place.
+
+        Remove indentation and do magic with the cell language
+        if applicable.
+
+        If nothing else, we need to deal with the 'content', 'icontent'
+        difference.
         """
         # homogenise content attribute of fenced and indented blocks
         block['content'] = block.get('content') or block['icontent']
