@@ -230,15 +230,38 @@ class MarkdownReader(NotebookReader):
         else:
             block['language'] = ''
 
-        # alternate descriptions for python code
-        python_aliases = ['python', 'py', '', None]
-        # ensure one identifier for python code
-        if 'language' in block and block['language'] in python_aliases:
-            pass
-        # add alternate language execution magic
-        elif 'language' in block and block['language'] != self.python:
-            code_magic = "%%{}\n".format(block['language'])
-            block['content'] = code_magic + block['content']
+        if 'language' in block:
+            # ensure one identifier for python code
+            if block['language'] in ('python', 'py', '', None):
+                block['language'] = self.python
+            # add alternate language execution magic
+            if block['language'] != self.python and self.magic:
+                block['content'] = CodeMagician()(block)
+
+
+class CodeMagician(object):
+    # aliases to different languages
+    many_aliases = {('r', 'R'): '%%R\n'}
+
+    # convert to many to one lookup (found as self.aliases)
+    aliases = {}
+    for k, v in many_aliases.items():
+        for key in k:
+            aliases[key] = v
+
+    def magic(self, alias):
+        """Returns the appropriate IPython code magic when
+        called with an alias for a language.
+        """
+        if alias in self.aliases:
+            return self.aliases[alias]
+        else:
+            return "%%{}\n".format(alias)
+
+    def __call__(self, block):
+        """Return the block with the magic prepended to the content."""
+        code_magic = self.magic(block['language'])
+        return code_magic + block['content']
 
 
 def knit(fin, fout,
