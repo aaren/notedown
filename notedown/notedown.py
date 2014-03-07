@@ -219,9 +219,30 @@ class MarkdownReader(NotebookReader):
             block['language'] = self.python
 
         # add alternate language execution magic
+        code_magician = CodeMagic()
         if 'language' in block and block['language'] != self.python:
-            code_magic = "%%{}\n".format(block['language'])
+            code_magic = code_magician(block['language'])
             block['content'] = code_magic + block['content']
+
+
+class CodeMagic(object):
+    # aliases to different languages
+    many_aliases = {('r', 'R'): '%%R\n'}
+
+    # convert to many to one lookup (found as self.aliases)
+    aliases = {}
+    for k, v in many_aliases.items():
+        for key in k:
+            aliases[key] = v
+
+    def __call__(self, alias):
+        """Returns the appropriate IPython code magic when
+        called with an alias for a language.
+        """
+        if alias in self.aliases:
+            return self.aliases[alias]
+        else:
+            return "%%{}\n".format(alias)
 
 
 def cli():
