@@ -148,11 +148,12 @@ class MarkdownReader(NotebookReader):
         # create a list of the right length
         all_blocks = range(len(text_blocks) + len(code_blocks))
 
-        # cells must alternate in order
+        # cells must alternate in order (if code blocks are adjacent
+        # then there is an entry of '' in text blocks)
         all_blocks[::2] = text_blocks
         all_blocks[1::2] = code_blocks
 
-        # remove possible empty first, last text cells
+        # remove empty text cells ('' as content)
         all_blocks = [cell for cell in all_blocks if cell['content']]
 
         return all_blocks
