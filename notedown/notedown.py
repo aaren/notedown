@@ -84,7 +84,7 @@ class MarkdownReader(NotebookReader):
 
         Returns a notebook.
         """
-        all_blocks = self.parse_blocks(s)
+        all_blocks = self.process_blocks(s)
 
         cells = []
         for block in all_blocks:
@@ -110,6 +110,14 @@ class MarkdownReader(NotebookReader):
         nb = nbbase.new_notebook(worksheets=[ws])
 
         return nb
+
+    def process_blocks(self, text):
+        all_blocks = self.parse_blocks(text)
+        # remove indents, add code magic, etc.
+        for block in all_blocks:
+            if block['type'] == self.code:
+                self.pre_process_code_block(block)
+        return all_blocks
 
     def parse_blocks(self, text):
         """Extract the code and non-code blocks from given markdown text.
@@ -138,9 +146,9 @@ class MarkdownReader(NotebookReader):
         # update with a type field
         code_blocks = [dict(d.items() + [('type', self.code)]) for d in
                                                                    code_blocks]
-
-        # remove indents, add code magic, etc.
-        map(self.pre_process_code_block, code_blocks)
+        # homogenise content attribute of fenced and indented blocks
+        for block in code_blocks:
+            block['content'] = block.get('content') or block['icontent']
 
         text_blocks = [{'content': text[i:j], 'type': self.markdown} for i, j
                                                                 in text_limits]
@@ -191,9 +199,6 @@ class MarkdownReader(NotebookReader):
         If nothing else, we need to deal with the 'content', 'icontent'
         difference.
         """
-        # homogenise content attribute of fenced and indented blocks
-        block['content'] = block.get('content') or block['icontent']
-
         # dedent indented code blocks
         if 'indent' in block and block['indent']:
             indent = r"^" + block['indent']
