@@ -8,7 +8,7 @@ except (IOError, ImportError):
 
 setup(
     name="notedown",
-    version='100.0.4dev',
+    version='1.0.4dev',
     description="Convert markdown to IPython notebook.",
     long_description=long_description,
     packages=['notedown'],
