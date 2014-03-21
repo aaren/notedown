@@ -9,9 +9,13 @@ import IPython.nbformat.v3.nbbase as nbbase
 
 
 class MarkdownReader(NotebookReader):
-    """Import markdown to Notebook. Only supports two kinds of cell:
-    code and markdown. The code must be formatted as in Github
-    Flavoured Markdown.
+    """Import markdown to IPython Notebook.
+
+    The markdown is split into blocks: code and not-code. These
+    blocks are used as the source for cells in the notebook. Code
+    blocks become code cells; not-code blocks become markdown cells.
+
+    Only supports two kinds of notebook cell: code and markdown.
     """
     ## type identifiers
     code = u'code'
