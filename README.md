@@ -80,7 +80,7 @@ notebook.
 You can set up a pseudo-interactive loop in Vim by calling
 
 ```viml
-:!notedown %s > out.ipynb
+:!notedown % > out.ipynb
 ```
 
 and viewing the result in the browser with
