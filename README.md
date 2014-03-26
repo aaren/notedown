@@ -114,6 +114,10 @@ nmap <leader>b [b,f
 nmap <leader>p ,b<C-s>
 ```
 
+### I can't put a literal code block in my markdown!
+
+Not right now, no. Notedown isn't very clever.
+
 
 ### Where's my syntax highlighting?!
 
