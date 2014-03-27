@@ -1,3 +1,122 @@
+Code attributes
+---------------
+
+Notebook code cells can contain metadata, which can be anything that
+we can express as JSON.
+
+Presently we just allow a single code attribute, the language, which
+comes immediately after the fenced code block start:
+
+\`\`\`python  
+this is some(code)  
+\`\`\`
+
+In pandoc markdown we can have code attributes:
+
+\`\`\`{.python #identifier .thing .numberLines startfrom="100" blah=100}  
+this is some(code)  
+\`\`\`  
+
+The idea is to take the code attributes and set them as metadata on
+the code cell. Then you can think of the code attributes as a way to
+edit cell metadata.
+
+Issues:
+
+1. Blindly pass all attributes as metadata, or sanitise them to
+   known attributes? Should notedown do particular things with
+   special attributes?
+
+2. Format of the code attributes.
+
+
+### Formatting
+
+Two considerations:
+
+1. Not creating another markdown dialect
+
+2. Rendering on github
+
+
+Examples of different styles:
+
+\`\`\`python  
+for i in range(10):  
+    print i  
+\`\`\`
+
+```python
+for i in range(10):
+    print i
+```
+
+\`\`\`{.python #mycode1 .thing .numberLines startfrom="100" blah=100}  
+for i in range(10):  
+    print i  
+\`\`\`
+
+```{.python #mycode1 .thing .numberLines startfrom="100" blah=100}
+for i in range(10):
+    print i
+```
+
+\`\`\`{.python #mycode2}  
+for i in range(10):  
+    print i  
+\`\`\`
+
+```{.python #mycode2}
+for i in range(10):
+    print i
+```
+
+Github doesn't like this one:
+
+\`\`\`{#mycode3 .python}
+for i in range(10):
+    print i
+\`\`\`
+
+```{#mycode3 .python}
+for i in range(10):
+    print i
+```
+
+Pandoc doesn't like this one:
+
+\`\`\`{python #mycode4}  
+for i in range(10):  
+    print i  
+\`\`\`  
+
+```{python #mycode4}
+for i in range(10):
+    print i
+```
+
+There is another format that we might encounter, r-markdown. Pandoc
+doesn't like this one, but github seems to cope:
+
+\`\`\`{python label, a=FALSE, b=2}  
+some(r(code))  
+\`\`\`  
+
+```{python label, a=FALSE, b=2}
+for i in range(10):
+    print i
+```
+
+A solution to this problem would be to support all of these formats
+and make it the authors problem what kind of markdown they make.
+This lifts the responsibility of deciding a markdown type, but adds
+a problem in that we have to support the syntax.
+
+Personally, my favourite syntax is the r-markdown. However I feel
+that something supported by pandoc is the right format to choose if
+we don't support everything.
+
+
 Figure embedding
 ----------------
 
