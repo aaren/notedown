@@ -1,9 +1,11 @@
 Notedown example
 ----------------
 
-This is an example to play around with. The markdown source is on
-[github] and the generated output can be viewed using [nbviewer].
+This is an example of a notebook generated from markdown using
+[notedown]. The markdown source is on [github] and the generated
+output can be viewed using [nbviewer].
 
+[notedown]: http://github.com/aaren/notedown
 [github]: https://github.com/aaren/notedown/blob/master/example.md
 [nbviewer]: http://nbviewer.ipython.org/github/aaren/notedown/blob/master/example.ipynb
 
