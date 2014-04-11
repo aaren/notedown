@@ -1,5 +1,6 @@
 import re
 import sys
+import os
 import argparse
 
 from IPython.nbformat.v3.rwbase import NotebookReader
@@ -217,6 +218,30 @@ class MarkdownReader(NotebookReader):
             block['content'] = code_magic + block['content']
 
 
+def knit(fin, fout,
+         opts_knit='progress=FALSE, verbose=FALSE',
+         opts_chunk='eval=FALSE'):
+    """Use knitr to convert r markdown (or anything knitr supports)
+    to markdown.
+
+    fin / fout - strings, input / output filenames.
+    opts_knit - string, options to pass to knit
+    opts_shunk - string, chunk options
+
+    options are passed verbatim to knitr:knit running in Rscript.
+    """
+    rcmd = ('Rscript -e '
+            '\'sink("/dev/null");'
+              'library(knitr);'
+              'opts_knit$set({opts_knit});'
+              'opts_chunk$set({opts_chunk});'
+              'knit("{input}", output="{output}")\'')
+
+    cmd = rcmd.format(input=fin, output=fout,
+                      opts_knit=opts_knit, opts_chunk=opts_chunk)
+    os.system(cmd)
+
+
 def cli():
     """Execute for command line usage."""
     description = "Create an IPython notebook from markdown."
@@ -229,6 +254,7 @@ def cli():
                         type=argparse.FileType('r'),
                         default=sys.stdin)
     parser.add_argument('--output',
+                        nargs='?',
                         help="output file, (default STDOUT)",
                         type=argparse.FileType('w'),
                         default=sys.stdout)
@@ -240,19 +266,49 @@ def cli():
                               "Default is to match both "
                               "fenced and indented code blocks."),
                         default=None)
+    parser.add_argument('--knit',
+                        nargs='?',
+                        help=("pre-process the markdown with knitr. "
+                              "Default chunk options are 'eval=FALSE' "
+                              "but you can change this by passing a string."),
+                        const='eval=FALSE')
 
     args = parser.parse_args()
 
-    with args.input_file as ip, args.output as op:
-        # if no stdin and no input file
-        if args.input_file.isatty():
-            parser.print_help()
-            exit()
+    # if no stdin and no input file
+    if args.input_file.isatty():
+        parser.print_help()
+        exit()
 
+    # temporary output file because knitr works best with files
+    tmp_out = ".knitr.tmp.output"
+    # maybe think about having a Knitr class that uses a tempfile,
+    # with a knit method that returns a string
+    if args.knit and args.output is sys.stdout:
+        output = tmp_out
+
+    elif args.knit and not args.output:
+        markdown = os.path.splitext(args.input_file.name)[0] + '.md'
+        notebook = os.path.splitext(args.input_file.name)[0] + '.ipynb'
+        output = markdown
+        args.output = open(notebook, 'w')
+
+    elif args.knit and args.output:
+        output = args.output.name
+
+    if args.knit:
+        knit(args.input_file.name, output, opts_chunk=args.knit)
+        # make the .md become the input file
+        args.input_file = open(output, 'r')
+
+    with args.input_file as ip, args.output as op:
         reader = MarkdownReader(code_regex=args.code_block)
         writer = JSONWriter()
         notebook = reader.read(ip)
         writer.write(notebook, op)
+
+    if os.path.exists(tmp_out) and args.knit and args.output is sys.stdout:
+        os.remove(tmp_out)
 
 if __name__ == '__main__':
     cli()
