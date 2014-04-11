@@ -167,6 +167,16 @@ class MarkdownReader(NotebookReader):
                         [ ]*            # followed by spaces
                         (?P<options>.*) # followed any text -> group 'options'
                         """
+        elif regex == 'rmd':
+            # R-markdown should really be parsed by knitr and
+            # converted to normal markdown, in order to deal with
+            # chunk options properly. For simple rmd we can do it
+            # in notedown, we just don't get any options.
+
+            # r-markdown
+            # format: {r option, a=1, b=2}
+            regex = r"""\{(?P<language>r)[ ]*(?P<options>.*)\}"""
+
         pattern = re.compile(regex, self.re_flags)
         return pattern.match(attributes).groupdict()
 
