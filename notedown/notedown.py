@@ -28,15 +28,13 @@ class MarkdownReader(NotebookReader):
     ## These two pattern strings are ORed to create a master pattern
     ## and the python re module doesn't allow sharing group names
     ## in a single regular expression.
+    re_flags = re.MULTILINE | re.VERBOSE
 
     # fenced code
     fenced_regex = r"""
     \n*                     # any number of newlines followed by
     ^(?P<fence>`{3,}|~{3,}) # a line starting with a fence of 3 or more ` or ~
-    (?P<language>           # followed by the group 'language',
-    [\w+-]*)                # a word of alphanumerics, _, - or +
-    [ ]*                    # followed by spaces
-    (?P<options>.*)         # followed by any text
+    (?P<attributes>.*)      # followed by the group 'attributes'
     \n                      # followed by a newline
     (?P<content>            # start a group 'content'
     [\s\S]*?)               # that includes anything
@@ -75,8 +73,7 @@ class MarkdownReader(NotebookReader):
         else:
             self.code_regex = code_regex
 
-        re_flags = re.MULTILINE | re.VERBOSE
-        self.code_pattern = re.compile(self.code_regex, re_flags)
+        self.code_pattern = re.compile(self.code_regex, self.re_flags)
 
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
@@ -160,6 +157,19 @@ class MarkdownReader(NotebookReader):
 
         return all_blocks
 
+    def parse_attributes(self, attributes, regex=None):
+        """Convert the content of attributes of fenced code blocks
+        into a dictionary.
+        """
+        if not regex:
+            regex = r"""(?P<language>    # group 'language',
+                        [\w+-]*)        # a word of alphanumerics, _, - or +
+                        [ ]*            # followed by spaces
+                        (?P<options>.*) # followed any text -> group 'options'
+                        """
+        pattern = re.compile(regex, self.re_flags)
+        return pattern.match(attributes).groupdict()
+
     def pre_process_code_block(self, block):
         """Preprocess the content of a code block, modifying the code
         block in place.
@@ -179,6 +189,18 @@ class MarkdownReader(NotebookReader):
             content = block['content'].splitlines()
             dedented = [re.sub(indent, '', line) for line in content]
             block['content'] = '\n'.join(dedented)
+
+        # TODO: language is going to be removed from the cell metadata
+        # at some point so we should stop depending on it.
+        # see https://github.com/aaren/notedown/issues/1
+
+        # extract attributes from fenced code blocks
+        if 'attributes' in block and block['attributes']:
+            attributes = self.parse_attributes(block['attributes'])
+            # only parses language currently
+            block['language'] = attributes['language']
+        else:
+            block['language'] = ''
 
         # alternate descriptions for python code
         python_aliases = ['python', 'py', '', None]
