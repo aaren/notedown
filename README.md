@@ -19,17 +19,30 @@ Installation:
 It is really simple and separates your markdown into code and not
 code. Code goes into code cells, not-code goes into markdown cells.
 
-Fenced code blocks annotated with a language other than python are
-read into cells using IPython's `%%` [cell magic][].
-
-[cell magic]: http://nbviewer.ipython.org/github/ipython/ipython/blob/1.x/examples/notebooks/Cell%20Magics.ipynb
-
 
 ### Why?
 
 *Save yourself* from the *indignity* of writing **text** in the browser!
 
 There might be more reasons, but that was the main one for me.
+
+
+### Magic
+
+Fenced code blocks annotated with a language other than python are
+read into cells using IPython's `%%` [cell magic][].
+
+[cell magic]: http://nbviewer.ipython.org/github/ipython/ipython/blob/1.x/examples/notebooks/Cell%20Magics.ipynb
+
+You can disable this with `--nomagic`.
+
+- `--pre` lets you add arbitrary code to the start of the notebook.
+  e.g. `notedown file.md --pre '%matplotlib inline' 'import numpy as np'`
+
+- `--rmagic` will add `%load_ext rmagic` at the start of the notebook.
+
+- `--knit` passes the markdown through [knitr] before creating a
+  notebook. This requires that you have R installed with knitr.
 
 
 ### What notedown does **not** do:
