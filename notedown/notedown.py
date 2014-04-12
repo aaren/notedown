@@ -89,9 +89,7 @@ class MarkdownReader(NotebookReader):
         cells = []
         for block in all_blocks:
             if block['type'] == self.code:
-                kwargs = {'input': block['content'],
-                          'language': block['language']}
-
+                kwargs = {'input': block['content']}
                 code_cell = nbbase.new_code_cell(**kwargs)
                 cells.append(code_cell)
 
@@ -200,10 +198,6 @@ class MarkdownReader(NotebookReader):
             dedented = [re.sub(indent, '', line) for line in content]
             block['content'] = '\n'.join(dedented)
 
-        # TODO: language is going to be removed from the cell metadata
-        # at some point so we should stop depending on it.
-        # see https://github.com/aaren/notedown/issues/1
-
         # extract attributes from fenced code blocks
         if 'attributes' in block and block['attributes']:
             attributes = self.parse_attributes(block['attributes'])
@@ -216,10 +210,9 @@ class MarkdownReader(NotebookReader):
         python_aliases = ['python', 'py', '', None]
         # ensure one identifier for python code
         if 'language' in block and block['language'] in python_aliases:
-            block['language'] = self.python
-
+            pass
         # add alternate language execution magic
-        if 'language' in block and block['language'] != self.python:
+        elif 'language' in block and block['language'] != self.python:
             code_magic = "%%{}\n".format(block['language'])
             block['content'] = code_magic + block['content']
 
