@@ -281,7 +281,8 @@ def knit(fin, fout,
               'library(knitr);'
               'opts_knit$set({opts_knit});'
               'opts_chunk$set({opts_chunk});'
-              'knit("{input}", output="{output}")\'')
+              'knit("{input}", output="{output}")\' '
+            '2> /dev/null')
 
     cmd = rcmd.format(input=fin, output=fout,
                       opts_knit=opts_knit, opts_chunk=opts_chunk)
