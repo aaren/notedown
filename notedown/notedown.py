@@ -54,9 +54,7 @@ class MarkdownReader(NotebookReader):
                                # the indent of the first one
     """
 
-    rmagic_pre = r"%load_ext rmagic"
-
-    def __init__(self, code_regex=None, rmagic=False):
+    def __init__(self, code_regex=None, precode=[]):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -65,6 +63,12 @@ class MarkdownReader(NotebookReader):
 
                          Default is to look for both indented and fenced
                          code blocks.
+
+            rmagic     - whether to place '%load_ext rmagic' at the start
+                         of the notebook.
+
+            load_ext   - list of extensions to load with '%load_ext' at the
+                         start of the notebook.
         """
         if not code_regex:
             self.code_regex = r"({}|{})".format(self.fenced_regex,
@@ -78,15 +82,18 @@ class MarkdownReader(NotebookReader):
 
         self.code_pattern = re.compile(self.code_regex, self.re_flags)
 
-        self.rmagic = rmagic
+        self.precode = precode
 
     @property
     def pre_code_block(self):
         """Code block to place at the start of the document."""
-        # TODO: if first block is markdown, place after?
         content = ''
-        if self.rmagic:
-            content += self.rmagic_pre + '\n'
+        for code in self.precode:
+            content += code + '\n'
+
+        # remove last newline
+        content = content[:-1]
+
         return {'content': content, 'type': self.code}
 
     def reads(self, s, **kwargs):
@@ -100,6 +107,7 @@ class MarkdownReader(NotebookReader):
         """
         all_blocks = self.parse_blocks(s)
         if self.pre_code_block['content']:
+            # TODO: if first block is markdown, place after?
             all_blocks.insert(0, self.pre_code_block)
 
         cells = []
@@ -289,10 +297,14 @@ def cli():
                         const='eval=FALSE')
     parser.add_argument('--rmagic',
                         action='store_true',
-                        help=("autoload the rmagic extension."))
-    parser.add_argument('--load_ext',
+                        help=("autoload the rmagic extension. synonym for "
+                              "--pre '%%load_ext rmagic'"))
+    parser.add_argument('--pre',
                         nargs='+',
-                        help=("autoload extensions"))
+                        default=[],
+                        help=("additional code to place at the start of the "
+                              "notebook, e.g. --pre '%%matplotlib inline' "
+                              "'import numpy as np'"))
 
     args = parser.parse_args()
 
@@ -322,8 +334,12 @@ def cli():
         # make the .md become the input file
         args.input_file = open(output, 'r')
 
+    precode = args.pre
+    if args.rmagic:
+        precode.append(r"%load_ext rmagic")
+
     with args.input_file as ip, args.output as op:
-        reader = MarkdownReader(code_regex=args.code_block, rmagic=args.rmagic)
+        reader = MarkdownReader(code_regex=args.code_block, precode=precode)
         writer = JSONWriter()
         notebook = reader.read(ip)
         writer.write(notebook, op)
