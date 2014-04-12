@@ -313,22 +313,23 @@ def cli():
                               "Default is to match both "
                               "fenced and indented code blocks."),
                         default=None)
-    parser.add_argument('--knit',
-                        nargs='?',
-                        help=("pre-process the markdown with knitr. "
-                              "Default chunk options are 'eval=FALSE' "
-                              "but you can change this by passing a string."),
-                        const='eval=FALSE')
-    parser.add_argument('--rmagic',
-                        action='store_true',
-                        help=("autoload the rmagic extension. synonym for "
-                              "--pre '%%load_ext rmagic'"))
     parser.add_argument('--pre',
                         nargs='+',
                         default=[],
                         help=("additional code to place at the start of the "
                               "notebook, e.g. --pre '%%matplotlib inline' "
                               "'import numpy as np'"))
+    parser.add_argument('--knit',
+                        nargs='?',
+                        help=("pre-process the markdown with knitr. "
+                              "Default chunk options are 'eval=FALSE' "
+                              "but you can change this by passing a string. "
+                              "Requires R in your path and knitr installed."),
+                        const='eval=FALSE')
+    parser.add_argument('--rmagic',
+                        action='store_true',
+                        help=("autoload the rmagic extension. Synonym for "
+                              "--pre '%%load_ext rmagic'"))
 
     args = parser.parse_args()
 
