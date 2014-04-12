@@ -54,7 +54,7 @@ class MarkdownReader(NotebookReader):
                                # the indent of the first one
     """
 
-    def __init__(self, code_regex=None, precode=[]):
+    def __init__(self, code_regex=None, precode=[], magic=True):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -83,6 +83,7 @@ class MarkdownReader(NotebookReader):
         self.code_pattern = re.compile(self.code_regex, self.re_flags)
 
         self.precode = precode
+        self.magic = magic
 
     @property
     def pre_code_block(self):
@@ -330,6 +331,10 @@ def cli():
                         action='store_true',
                         help=("autoload the rmagic extension. Synonym for "
                               "--pre '%%load_ext rmagic'"))
+    parser.add_argument('--nomagic',
+                        action='store_false',
+                        dest='magic',
+                        help=("disable code magic."))
 
     args = parser.parse_args()
 
@@ -364,7 +369,10 @@ def cli():
         precode.append(r"%load_ext rmagic")
 
     with args.input_file as ip, args.output as op:
-        reader = MarkdownReader(code_regex=args.code_block, precode=precode)
+        kwargs = {'code_regex': args.code_block,
+                  'precode': precode,
+                  'magic': args.magic}
+        reader = MarkdownReader(**kwargs)
         writer = JSONWriter()
         notebook = reader.read(ip)
         writer.write(notebook, op)
