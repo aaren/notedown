@@ -54,7 +54,9 @@ class MarkdownReader(NotebookReader):
                                # the indent of the first one
     """
 
-    def __init__(self, code_regex=None):
+    rmagic_pre = r"%load_ext rmagic"
+
+    def __init__(self, code_regex=None, rmagic=False):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -76,6 +78,17 @@ class MarkdownReader(NotebookReader):
 
         self.code_pattern = re.compile(self.code_regex, self.re_flags)
 
+        self.rmagic = rmagic
+
+    @property
+    def pre_code_block(self):
+        """Code block to place at the start of the document."""
+        # TODO: if first block is markdown, place after?
+        content = ''
+        if self.rmagic:
+            content += self.rmagic_pre + '\n'
+        return {'content': content, 'type': self.code}
+
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
         return self.to_notebook(s, **kwargs)
@@ -86,6 +99,8 @@ class MarkdownReader(NotebookReader):
         Returns a notebook.
         """
         all_blocks = self.parse_blocks(s)
+        if self.pre_code_block['content']:
+            all_blocks.insert(0, self.pre_code_block)
 
         cells = []
         for block in all_blocks:
@@ -272,6 +287,12 @@ def cli():
                               "Default chunk options are 'eval=FALSE' "
                               "but you can change this by passing a string."),
                         const='eval=FALSE')
+    parser.add_argument('--rmagic',
+                        action='store_true',
+                        help=("autoload the rmagic extension."))
+    parser.add_argument('--load_ext',
+                        nargs='+',
+                        help=("autoload extensions"))
 
     args = parser.parse_args()
 
@@ -302,7 +323,7 @@ def cli():
         args.input_file = open(output, 'r')
 
     with args.input_file as ip, args.output as op:
-        reader = MarkdownReader(code_regex=args.code_block)
+        reader = MarkdownReader(code_regex=args.code_block, rmagic=args.rmagic)
         writer = JSONWriter()
         notebook = reader.read(ip)
         writer.write(notebook, op)
