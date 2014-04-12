@@ -162,7 +162,7 @@ class MarkdownReader(NotebookReader):
         into a dictionary.
         """
         if not regex:
-            regex = r"""(?P<language>    # group 'language',
+            regex = r"""(?P<language>   # group 'language',
                         [\w+-]*)        # a word of alphanumerics, _, - or +
                         [ ]*            # followed by spaces
                         (?P<options>.*) # followed any text -> group 'options'
