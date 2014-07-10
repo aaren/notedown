@@ -39,6 +39,8 @@ You can disable this with `--nomagic`.
 - `--pre` lets you add arbitrary code to the start of the notebook.
   e.g. `notedown file.md --pre '%matplotlib inline' 'import numpy as np'`
 
+#### R / knitr magic
+
 - `--rmagic` will add `%load_ext rmagic` at the start of the notebook.
 
 - `--knit` passes the markdown through [knitr] before creating a
