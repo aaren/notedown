@@ -1,7 +1,7 @@
 These are some examples of how you can process r-markdown using
 notedown, knitr and the rmagic extension.
 
-Thanks to @ramnathv for writing the examples!
+Thanks to [@ramnathv](https://github.com/ramnathv) for writing the examples!
 
 Essentially, you can run [this r-markdown][rmd] to obtain [this notebook][nbviewer].
 
