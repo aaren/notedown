@@ -7,6 +7,9 @@ from markdown.
 [ipython]: http://www.ipython.org/notebook
 [notedown]: http://github.com/aaren/notedown
 
+It is really simple and separates your markdown into code and not
+code. Code goes into code cells, not-code goes into markdown cells.
+
 Usage:
 
     notedown input.md > output.ipynb
@@ -15,9 +18,9 @@ Installation:
 
     pip install notedown
 
+or the latest on github:
 
-It is really simple and separates your markdown into code and not
-code. Code goes into code cells, not-code goes into markdown cells.
+    pip install https://github.com/aaren/notedown/tarball/master
 
 
 ### Why?
