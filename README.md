@@ -176,7 +176,7 @@ syn region texinlinemaths start="\(\$\)\@<!\&\(\\\)\@<!\$\(\$\)\@!" end="\(\$\)\
 #### Syntax highlighting with Github flavored markdown
 
 If you are using [vim-flavored-markdown], put the following into
-''after/syntax/ghmarkdown.vim'':
+``after/syntax/ghmarkdown.vim``:
 
 ```viml
 " Enable syntax highlighting for python code blocks in Github flavored markdown
