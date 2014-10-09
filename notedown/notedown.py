@@ -2,11 +2,17 @@ import re
 import sys
 import os
 import argparse
-
-from IPython.nbformat.v3.rwbase import NotebookReader
-from IPython.nbformat.v3.nbjson import JSONWriter
+import json
 
 import IPython.nbformat.v3.nbbase as nbbase
+from IPython.nbformat import current as nbformat
+
+from IPython.nbformat.v3.rwbase import NotebookReader
+from IPython.nbformat.v3.rwbase import NotebookWriter
+from IPython.nbformat.v3.nbjson import JSONWriter
+from IPython.nbformat.v3.nbjson import JSONReader
+
+from IPython.nbconvert import MarkdownExporter
 
 
 class MarkdownReader(NotebookReader):
@@ -267,6 +273,36 @@ class MarkdownReader(NotebookReader):
                                   block['content'])
 
 
+def string2json(string):
+    """Convert json into it's string representation.
+    Used for writing outputs to markdown."""
+    # we can do this:
+    # return json.dumps(string, **kwargs)
+    # but there is a special encoder in ipython that we can get at
+    # through the jsonwriter, so we'll use that. this is a bit hacky
+    # as we are pretending that the string is actually a notebook.
+    writer = JSONWriter()
+    return writer.writes(string, split_lines=False)
+
+
+class MarkdownWriter(NotebookWriter):
+    def __init__(self, template_file):
+        self.exporter = MarkdownExporter()
+        self.exporter.register_filter('json2string', string2json)
+        # for some reason you don't read the template file and pass it
+        # as the `template` argument when we create the instance
+        self.exporter.template_file = template_file
+
+    def write_from_json(self, notebook_json):
+        notebook = nbformat.reads_json(notebook_json)
+        return self.write(notebook)
+
+    def writes(self, notebook):
+        body, resources = self.exporter.from_notebook_node(notebook)
+        # remove any blank lines added at start and end by template
+        return re.sub(r'\A\s*\n|^\s*\Z', '', body)
+
+
 class CodeMagician(object):
     # aliases to different languages
     many_aliases = {('r', 'R'): '%%R\n'}
@@ -362,12 +398,30 @@ def cli():
                         action='store_false',
                         dest='magic',
                         help=("disable code magic."))
+    parser.add_argument('--reverse',
+                        action='store_true',
+                        help=("convert notebook to markdown"))
+    parser.add_argument('--with_outputs',
+                        action='store_true',
+                        help=("include outputs in markdown output"))
 
     args = parser.parse_args()
 
     # if no stdin and no input file
     if args.input_file.isatty():
         parser.print_help()
+        exit()
+
+    if args.reverse:
+        with args.input_file as ip, args.output as op:
+            reader = JSONReader()
+            if args.with_outputs:
+                writer = MarkdownWriter('templates/markdown.tpl')
+            else:
+                writer = MarkdownWriter('templates/markdown_stripped.tpl')
+
+            notebook = reader.read(ip)
+            writer.write(notebook, op)
         exit()
 
     # temporary output file because knitr works best with files

@@ -1,3 +1,5 @@
+import nose.tools as nt
+
 import notedown
 
 simple_backtick = """
@@ -100,6 +102,8 @@ Installation:
 #    writer = notedown.JSONWriter()
 #    print writer.writes(sample_notebook)
 #
+# which is defined in create_json_notebook() below
+
 sample_notebook = r"""{
  "metadata": {},
  "nbformat": 3,
@@ -156,18 +160,33 @@ sample_notebook = r"""{
 }"""
 
 
-def create_json_notebook():
+roundtrip_markdown = u"""## A roundtrip test
+
+Here is a code cell:
+
+```python
+a = 1
+```
+
+and here is another one:
+
+```python
+b = 2
+```
+"""
+
+
+def create_json_notebook(markdown):
     reader = notedown.MarkdownReader()
     writer = notedown.JSONWriter()
 
-    notebook = reader.reads(sample_markdown)
+    notebook = reader.reads(markdown)
     json_notebook = writer.writes(notebook)
     return json_notebook
 
 
 def test_notedown():
     """Integration test the whole thing."""
-    assert(create_json_notebook() == sample_notebook)
     from difflib import ndiff
     notebook = create_json_notebook(sample_markdown)
     diff = ndiff(sample_notebook.splitlines(1), notebook.splitlines(1))
@@ -278,3 +297,26 @@ def test_pre_process_text():
     print expected
     print "---"
     assert(block['content'] == expected)
+
+
+def test_roundtrip():
+    """Run nbconvert using our custom markdown template to recover
+    original markdown from a notebook.
+    """
+    # create a notebook from the markdown
+    mr = notedown.MarkdownReader()
+    roundtrip_notebook = mr.to_notebook(roundtrip_markdown)
+
+    # write the notebook into json
+    jw = notedown.JSONWriter()
+    notebook_json = jw.writes(roundtrip_notebook)
+
+    # write the json back into notebook
+    jr = notedown.JSONReader()
+    notebook = jr.reads(notebook_json)
+
+    # convert notebook to markdown
+    mw = notedown.MarkdownWriter(template_file='templates/markdown_stripped.tpl')
+    markdown = mw.writes(notebook)
+
+    nt.assert_multi_line_equal(roundtrip_markdown, markdown)
