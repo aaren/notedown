@@ -4,7 +4,11 @@ simple_backtick = """
 ```
 code1
     space_indent
+
+
+more code
 ```
+
 text1
 ``
 
@@ -20,7 +24,11 @@ simple_tilde = """
 ~~~
 code1
     space_indent
+
+
+more code
 ~~~
+
 text1
 ``
 
@@ -36,15 +44,22 @@ simple_indented = """
     code1
         space_indent
 
+
+    more code
+
 text1
 ``
+
 	code2
 		tab_indent
 	~~~
 
 text2"""
 
-simple_code_cells = ['code1\n    space_indent', 'code2\n	tab_indent\n~~~']
+simple_code_cells = ['code1\n    space_indent\n\n\nmore code',
+                     'code2\n	tab_indent\n~~~']
+# note: ipython markdown cells do not end with a newline unless
+# explicitly present.
 simple_markdown_cells = ['text1\n``', 'text2']
 
 alt_lang = """
@@ -68,7 +83,6 @@ Usage:
 ```
 notedown input.md > output.ipynb
 ```
-
 
 It is really simple and separates your markdown into code and not
 code. Code goes into code cells, not-code goes into markdown cells.
@@ -154,6 +168,12 @@ def create_json_notebook():
 def test_notedown():
     """Integration test the whole thing."""
     assert(create_json_notebook() == sample_notebook)
+    from difflib import ndiff
+    notebook = create_json_notebook(sample_markdown)
+    diff = ndiff(sample_notebook.splitlines(1), notebook.splitlines(1))
+    print '\n'.join(diff)
+    nt.assert_multi_line_equal(create_json_notebook(sample_markdown),
+                               sample_notebook)
 
 
 def parse_cells(text, regex):
@@ -180,6 +200,10 @@ def test_parse_gfm():
     code_cells = separate_code_cells(all_cells)
     markdown_cells = separate_markdown_cells(all_cells)
 
+    print "out: ", code_cells
+    print "ref: ", simple_code_cells
+    print "out: ", markdown_cells
+    print "ref: ", simple_markdown_cells
     assert(code_cells == simple_code_cells)
     assert(markdown_cells == simple_markdown_cells)
 
@@ -202,6 +226,10 @@ def test_parse_indented():
     code_cells = separate_code_cells(all_cells)
     markdown_cells = separate_markdown_cells(all_cells)
 
+    print "out: ", code_cells
+    print "ref: ", simple_code_cells
+    print "out: ", markdown_cells
+    print "ref: ", simple_markdown_cells
     assert(code_cells == simple_code_cells)
     assert(markdown_cells == simple_markdown_cells)
 
@@ -230,3 +258,23 @@ def test_format_agnostic():
 
     assert(fenced_code_cells == indented_code_cells)
     assert(fenced_markdown_cells == indented_markdown_cells)
+
+
+def test_pre_process_text():
+    """test the stripping of blank lines"""
+    block = {}
+    ref = "\t \n\n   \t\n\ntext \t \n\n\n"
+    block['content'] = ref
+    notedown.MarkdownReader.pre_process_text_block(block)
+    expected = "\n   \t\n\ntext \t \n"
+    print "---"
+    print "in: "
+    print ref
+    print "---"
+    print "out: "
+    print block['content']
+    print "---"
+    print "expected: "
+    print expected
+    print "---"
+    assert(block['content'] == expected)

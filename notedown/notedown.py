@@ -33,25 +33,25 @@ class MarkdownReader(NotebookReader):
 
     # fenced code
     fenced_regex = r"""
-    \n*                     # any number of newlines followed by
     ^(?P<fence>`{3,}|~{3,}) # a line starting with a fence of 3 or more ` or ~
     (?P<attributes>.*)      # followed by the group 'attributes'
     \n                      # followed by a newline
     (?P<content>            # start a group 'content'
     [\s\S]*?)               # that includes anything
-    \n(?P=fence)$           # up until the same fence that we started with
-    \n*                     # followed by any number of newlines
+    \n(?P=fence)$\n         # up until the same fence that we started with
     """
 
     # indented code
     indented_regex = r"""
-    \n*                        # any number of newlines
+    ^\s*$\n                    # a blank line followed by
     (?P<icontent>              # start group 'icontent'
     (?P<indent>^([ ]{4,}|\t))  # an indent of at least four spaces or one tab
     [\s\S]*?)                  # any code
-    \n*                        # any number of newlines
-    ^(?!(?P=indent))           # stop when there is a line without at least
-                               # the indent of the first one
+    \n(\Z|                     # followed by the end of the string or
+    ^[ \t]*\n)                 # a blank line that is
+    (?!((?P=indent)[ \t]*\S+)  # not followed by a line beginning with the
+                               # indent
+    |\n[ \t]*)                 # or another blank line
     """
 
     def __init__(self, code_regex=None, precode=[], magic=True):
@@ -77,6 +77,8 @@ class MarkdownReader(NotebookReader):
             self.code_regex = self.fenced_regex
         elif code_regex == 'indented':
             self.code_regex = self.indented_regex
+        elif code_regex == 'old fenced':
+            self.code_regex = self.old_fenced_regex
         else:
             self.code_regex = code_regex
 
@@ -159,23 +161,33 @@ class MarkdownReader(NotebookReader):
         # list of the groups from the code blocks
         code_blocks = [m.groupdict() for m in code_matches]
         # update with a type field
-        code_blocks = [dict(d.items() + [('type', self.code)]) for d in
-                                                                   code_blocks]
+        code_blocks = [dict(d.items() + [('type', self.code)])
+                       for d in code_blocks]
+
+        text_blocks = [{'content': text[i:j], 'type': self.markdown}
+                       for i, j in text_limits]
 
         # remove indents, add code magic, etc.
         map(self.pre_process_code_block, code_blocks)
-
-        text_blocks = [{'content': text[i:j], 'type': self.markdown} for i, j
-                                                                in text_limits]
+        # remove blank line at start and end of markdown
+        map(self.pre_process_text_block, text_blocks)
 
         # create a list of the right length
         all_blocks = range(len(text_blocks) + len(code_blocks))
+
+        # NOTE: the behaviour here is a bit fragile in that we
+        # assume that cells must alternate between code and
+        # markdown. This isn't the case, as we could have
+        # consecutive code cells, and we get around this by
+        # stripping out empty cells. i.e. two consecutive code cells
+        # have an empty markdown cell between them which is stripped
+        # out because it is empty.
 
         # cells must alternate in order
         all_blocks[::2] = text_blocks
         all_blocks[1::2] = code_blocks
 
-        # remove possible empty first, last text cells
+        # remove possible empty text cells
         all_blocks = [cell for cell in all_blocks if cell['content']]
 
         return all_blocks
@@ -213,15 +225,12 @@ class MarkdownReader(NotebookReader):
         If nothing else, we need to deal with the 'content', 'icontent'
         difference.
         """
-        # homogenise content attribute of fenced and indented blocks
-        block['content'] = block.get('content') or block['icontent']
-
         # dedent indented code blocks
         if 'indent' in block and block['indent']:
-            indent = r"^" + block['indent']
-            content = block['content'].splitlines()
-            dedented = [re.sub(indent, '', line) for line in content]
-            block['content'] = '\n'.join(dedented)
+            indent = r"\n" + block['indent']
+            block['content'] = re.sub(indent,
+                                      '\n',
+                                      block['icontent']).lstrip(block['indent'])
 
         # extract attributes from fenced code blocks
         if 'attributes' in block and block['attributes']:
@@ -238,6 +247,24 @@ class MarkdownReader(NotebookReader):
             # add alternate language execution magic
             if block['language'] != self.python and self.magic:
                 block['content'] = CodeMagician()(block)
+
+    @staticmethod
+    def pre_process_text_block(block):
+        """Apply pre processing to text blocks.
+
+        Currently just strips a single blank line from the beginning
+        and end of the block.
+        """
+        block['content'] = re.sub(r"""(?mx)
+                                  (
+                                  (?:\A[ \t]*\n)
+                                  |
+                                  (?:\n^[ \t]*\n\Z)
+                                  |
+                                  (?:\n\Z)
+                                  )""",
+                                  '',
+                                  block['content'])
 
 
 class CodeMagician(object):
