@@ -15,6 +15,9 @@ from IPython.nbformat.v3.nbjson import JSONReader
 from IPython.nbconvert import MarkdownExporter
 
 
+languages = ['python', 'r', 'ruby', 'bash']
+
+
 class MarkdownReader(NotebookReader):
     """Import markdown to IPython Notebook.
 
@@ -60,7 +63,8 @@ class MarkdownReader(NotebookReader):
     |\n[ \t]*)                 # or another blank line
     """
 
-    def __init__(self, code_regex=None, precode=[], magic=True):
+    def __init__(self, code_regex=None, precode=[], magic=True,
+                 attrs=None):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -93,6 +97,8 @@ class MarkdownReader(NotebookReader):
         self.precode = precode
         self.magic = magic
 
+        self.attrs = attrs
+
     @property
     def pre_code_block(self):
         """Code block to place at the start of the document."""
@@ -121,10 +127,16 @@ class MarkdownReader(NotebookReader):
 
         cells = []
         for block in all_blocks:
-            if block['type'] == self.code:
+            if (block['type'] == self.code) and (block['IO'] == 'input'):
                 kwargs = {'input': block['content']}
                 code_cell = nbbase.new_code_cell(**kwargs)
                 cells.append(code_cell)
+
+            elif (block['type'] == self.code
+                  and block['IO'] == 'output'
+                  and cells[-1].cell_type == 'code'):
+                cells[-1].outputs = json.loads(block['content'])
+                cells[-1].prompt_number = block['attributes']['n']
 
             elif block['type'] == self.markdown:
                 kwargs = {'cell_type': block['type'],
@@ -218,6 +230,11 @@ class MarkdownReader(NotebookReader):
             # format: {r option, a=1, b=2}
             regex = r"""\{(?P<language>r)[ ]*(?P<options>.*)\}"""
 
+        elif regex == 'pandoc':
+            parser = PandocAttributeParser()
+            attr_dict = parser.parse(attributes.strip('{}'))
+            return attr_dict
+
         pattern = re.compile(regex, self.re_flags)
         return pattern.match(attributes).groupdict()
 
@@ -240,9 +257,27 @@ class MarkdownReader(NotebookReader):
 
         # extract attributes from fenced code blocks
         if 'attributes' in block and block['attributes']:
-            attributes = self.parse_attributes(block['attributes'])
-            # only parses language currently
-            block['language'] = attributes['language']
+            attr_string = block['attributes']
+            # try and be clever to select correct parser
+            if self.attrs:
+                attributes = self.parse_attributes(block['attributes'],
+                                                   self.attrs)
+
+            elif attr_string.startswith('{') and attr_string.endswith('}'):
+                attributes = self.parse_attributes(block['attributes'],
+                                                   'pandoc')
+                self.attrs = 'pandoc'
+                try:
+                    classes = set(attributes['classes'])
+                    block['language'] = classes.intersection(languages).pop()
+                except KeyError:
+                    block['language'] = ''
+            else:
+                attributes = self.parse_attributes(block['attributes'])
+                block['language'] = attributes['language']
+
+            block['attributes'] = attributes
+
         else:
             block['language'] = ''
 
@@ -253,6 +288,16 @@ class MarkdownReader(NotebookReader):
             # add alternate language execution magic
             if block['language'] != self.python and self.magic:
                 block['content'] = CodeMagician()(block)
+
+        # set input / output status of cell (only with pandoc attrs)
+        if self.attrs == 'pandoc':
+            classes = block['attributes']['classes']
+            if 'input' in classes:
+                block['IO'] = 'input'
+            elif 'output' and 'json' in classes:
+                block['IO'] = 'output'
+        else:
+            block['IO'] = 'input'
 
     @staticmethod
     def pre_process_text_block(block):
@@ -326,6 +371,52 @@ class CodeMagician(object):
         """Return the block with the magic prepended to the content."""
         code_magic = self.magic(block['language'])
         return code_magic + block['content']
+
+
+class PandocAttributeParser(object):
+    """Parser for pandoc block attributes.
+
+    usage:
+        attrs = '#id .class1 .class2 key=value'
+        parser = AttributeParser()
+        parser.parse(attrs)
+        >>> {'id': 'id', 'classes': ['class1', 'class2'], 'key'='value'}
+    """
+    spnl = ' \n'
+
+    @staticmethod
+    def isid(string):
+        return string.startswith('#')
+
+    @staticmethod
+    def isclass(string):
+        return string.startswith('.')
+
+    @staticmethod
+    def iskv(string):
+        return ('=' in string)
+
+    @staticmethod
+    def isspecial(string):
+        return '-' == string
+
+    @classmethod
+    def parse(self, attr_string):
+        attr_string = attr_string.strip('{}')
+        split_regex = r'''((?:[^{separator}"']|"[^"]*"|'[^']*')+)'''.format
+        splitter = re.compile(split_regex(separator=self.spnl))
+        attrs = splitter.split(attr_string)[1::2]
+
+        id = [a[1:] for a in attrs if self.isid(a)]
+        classes = [a[1:] for a in attrs if self.isclass(a)]
+        kvs = [a.split('=', 1) for a in attrs if self.iskv(a)]
+        special = ['unnumbered' for a in attrs if self.isspecial(a)]
+
+        attr_dict = {k: v for k, v in kvs}
+        attr_dict['id'] = id[0] if id else ""
+        attr_dict['classes'] = classes + special
+
+        return attr_dict
 
 
 def knit(fin, fout,
