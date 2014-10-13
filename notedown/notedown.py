@@ -130,6 +130,8 @@ class MarkdownReader(NotebookReader):
             if (block['type'] == self.code) and (block['IO'] == 'input'):
                 kwargs = {'input': block['content']}
                 code_cell = nbbase.new_code_cell(**kwargs)
+                if block['attributes'] and self.attrs == 'pandoc':
+                    code_cell.metadata = {'attributes': block['attributes']}
                 cells.append(code_cell)
 
             elif (block['type'] == self.code
@@ -353,18 +355,13 @@ class MarkdownWriter(NotebookWriter):
         return writer.writes(string, split_lines=False)
 
     def create_input_codeblock(self, cell):
-        if self.strip_outputs:
-            codeblock = ('\n{fence}python\n'
-                         '{contents}\n'
-                         '{fence}\n')
-        else:
-            codeblock = ('\n{fence}{{.python .input n={prompt_number}}}\n'
-                         '{contents}\n'
-                         '{fence}\n')
+        codeblock = ('\n{fence}{attributes}\n'
+                     '{cell.input}\n'
+                     '{fence}\n')
 
-        return codeblock.format(fence='```',
-                                prompt_number=cell.prompt_number,
-                                contents=cell.input)
+        return codeblock.format(attributes=self.create_attributes(cell),
+                                fence='```',
+                                cell=cell)
 
     def create_output_codeblock(self, cell):
         if self.strip_outputs:
@@ -375,6 +372,32 @@ class MarkdownWriter(NotebookWriter):
         return codeblock.format(fence='```',
                                 prompt_number=cell.prompt_number,
                                 contents=self.string2json(cell.outputs))
+
+    def create_attributes(self, cell):
+        if self.strip_outputs:
+            return 'python'
+        else:
+            attrlist = ['.python', '.input', 'n={}'.format(cell.prompt_number)]
+            attrs = cell.metadata['attributes'].copy()
+
+            id = attrs.pop('id')
+            if id:
+                attrlist.append('#' + id)
+
+            classes = attrs.pop('classes')
+            for cls in classes:
+                if cls in ('python', 'input'):
+                    pass
+                else:
+                    attrlist.append('.' + cls)
+
+            for k, v in attrs.items():
+                if k == 'n':
+                    pass
+                else:
+                    attrlist.append(k + '=' + v)
+
+            return '{' + ' '.join(attrlist) + '}'
 
 
 class CodeMagician(object):
