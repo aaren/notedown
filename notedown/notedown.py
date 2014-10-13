@@ -544,10 +544,20 @@ def cli():
     parser.add_argument('--reverse',
                         action='store_true',
                         help=("convert notebook to markdown"))
-    parser.add_argument('--nostrip',
-                        action='store_false',
+    parser.add_argument('--strip',
+                        action='store_true',
                         dest='strip_outputs',
                         help=("include outputs in markdown output"))
+    parser.add_argument('--to',
+                        nargs='?',
+                        default='notebook',
+                        choices=('notebook', 'markdown'),
+                        help=("format to convert to"))
+    parser.add_argument('--from',
+                        nargs='?',
+                        default='markdown',
+                        choices=('notebook', 'markdown'),
+                        help=("format to convert from"))
 
     args = parser.parse_args()
 
