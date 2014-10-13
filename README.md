@@ -1,5 +1,5 @@
-Create IPython Notebooks from markdown
---------------------------------------
+Convert IPython Notebooks to markdown (and back)
+------------------------------------------------
 
 [notedown] is a simple tool to create [IPython notebooks][ipython]
 from markdown.
@@ -8,7 +8,8 @@ from markdown.
 [notedown]: http://github.com/aaren/notedown
 
 It is really simple and separates your markdown into code and not
-code. Code goes into code cells, not-code goes into markdown cells.
+code. Code blocks (fenced or indented) go into input cells,
+everything else goes into markdown cells.
 
 Usage:
 
@@ -30,6 +31,33 @@ or the latest on github:
 There might be more reasons, but that was the main one for me.
 
 
+### Conversion from notebook to markdown
+
+Convert a notebook into markdown, stripping all outputs:
+
+    notedown input.ipynb --reverse > output.md
+
+Convert a notebook into markdown, with outputs intact:
+
+    notedown input.ipynb --reverse --nostrip > output_with_outputs.md
+
+The outputs are placed as JSON in a code-block immediately after the
+corresponding input code-block. `notedown` understands this format
+as well, so it is possible to roundtrip notebooks through json and
+markdown formats.
+
+Convert a notebook into markdown and back again, preserving cell
+outputs all the way through:
+
+    notedown input.ipynb --reverse --nostrip | notedown > same_as_input.ipynb
+
+This means it is possible to edit markdown, convert to notebook,
+play around a bit and convert back to markdown.
+
+NB: currently, notebook and cell metadata is not preserved in the
+conversion.
+
+
 ### Magic
 
 Fenced code blocks annotated with a language other than python are
@@ -47,7 +75,9 @@ You can disable this with `--nomagic`.
 - `--rmagic` will add `%load_ext rmagic` at the start of the notebook.
 
 - `--knit` passes the markdown through [knitr] before creating a
-  notebook. This requires that you have R installed with knitr.
+  notebook. This requires that you have R installed with [knitr].
+
+[knitr]: yihui.name/knitr
 
 
 ### What notedown does **not** do:
@@ -55,18 +85,6 @@ You can disable this with `--nomagic`.
 - convert from notebook to markdown
 - run code cells
 - embed figures
-
-
-### Conversion from notebook to markdown
-
-Converting from an IPython notebook to markdown is done using
-`nbconvert`:
-
-    ipython nbconvert notebook.ipynb --to markdown
-
-The IPython markdown export is currently quite basic, so you can't
-expect to convert markdown -> notebook -> markdown and get back your
-original markdown.
 
 
 ### Running an IPython Notebook
