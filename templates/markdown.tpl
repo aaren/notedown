@@ -1,16 +1,12 @@
 {% extends 'display_priority.tpl' %}
 
-{% block input %}
-{{ cell | create_input_codeblock }}
-{% endblock input %}
+{% block input %}{{ cell | create_input_codeblock }}{% endblock input %}
 
 {% block markdowncell scoped %}
 {{ cell.source }}
 {% endblock markdowncell %}
 
-{% block outputs %}
-{{ cell | create_output_codeblock }}
-{% endblock outputs %}
+{% block outputs %}{{ cell | create_output_codeblock }}{% endblock outputs %}
 
 {% block headingcell scoped %}
 {{ '#' * cell.level }} {{ cell.source | replace('\n', ' ') }}

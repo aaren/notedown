@@ -318,47 +318,18 @@ class MarkdownReader(NotebookReader):
                                   block['content'])
 
 
-def string2json(string):
-    """Convert json into it's string representation.
-    Used for writing outputs to markdown."""
-    # we can do this:
-    # return json.dumps(string, **kwargs)
-    # but there is a special encoder in ipython that we can get at
-    # through the jsonwriter, so we'll use that. this is a bit hacky
-    # as we are pretending that the string is actually a notebook.
-    writer = JSONWriter()
-    return writer.writes(string, split_lines=False)
-
-
-def create_input_codeblock(cell):
-    codeblock = ('{fence}{{.python .input n={prompt_number}}}\n'
-                 '{contents}\n'
-                 '{fence}')
-    return codeblock.format(fence='```',
-                            prompt_number=cell.prompt_number,
-                            contents=cell.input)
-
-def create_output_codeblock(cell):
-    codeblock = ('{fence}{{.json .output n={prompt_number}}}\n'
-                 '{contents}\n'
-                 '{fence}')
-    return codeblock.format(fence='```',
-                            prompt_number=cell.prompt_number,
-                            contents=string2json(cell.outputs))
-
-
-
 class MarkdownWriter(NotebookWriter):
-    def __init__(self, template_file):
+    def __init__(self, template_file, strip_outputs=True):
         self.exporter = MarkdownExporter()
-        self.exporter.register_filter('string2json', string2json)
+        self.exporter.register_filter('string2json', self.string2json)
         self.exporter.register_filter('create_input_codeblock',
-                                      create_input_codeblock)
+                                      self.create_input_codeblock)
         self.exporter.register_filter('create_output_codeblock',
-                                      create_output_codeblock)
+                                      self.create_output_codeblock)
         # for some reason you don't read the template file and pass it
         # as the `template` argument when we create the instance
         self.exporter.template_file = template_file
+        self.strip_outputs = strip_outputs
 
     def write_from_json(self, notebook_json):
         notebook = nbformat.reads_json(notebook_json)
@@ -368,6 +339,42 @@ class MarkdownWriter(NotebookWriter):
         body, resources = self.exporter.from_notebook_node(notebook)
         # remove any blank lines added at start and end by template
         return re.sub(r'\A\s*\n|^\s*\Z', '', body)
+
+    # --- filter functions to be used in the output template --- #
+    def string2json(self, string):
+        """Convert json into it's string representation.
+        Used for writing outputs to markdown."""
+        # we can do this:
+        # return json.dumps(string, **kwargs)
+        # but there is a special encoder in ipython that we can get at
+        # through the jsonwriter, so we'll use that. this is a bit hacky
+        # as we are pretending that the string is actually a notebook.
+        writer = JSONWriter()
+        return writer.writes(string, split_lines=False)
+
+    def create_input_codeblock(self, cell):
+        if self.strip_outputs:
+            codeblock = ('\n{fence}python\n'
+                         '{contents}\n'
+                         '{fence}\n')
+        else:
+            codeblock = ('\n{fence}{{.python .input n={prompt_number}}}\n'
+                         '{contents}\n'
+                         '{fence}\n')
+
+        return codeblock.format(fence='```',
+                                prompt_number=cell.prompt_number,
+                                contents=cell.input)
+
+    def create_output_codeblock(self, cell):
+        if self.strip_outputs:
+            return ''
+        codeblock = ('\n{fence}{{.json .output n={prompt_number}}}\n'
+                     '{contents}\n'
+                     '{fence}\n')
+        return codeblock.format(fence='```',
+                                prompt_number=cell.prompt_number,
+                                contents=self.string2json(cell.outputs))
 
 
 class CodeMagician(object):
@@ -514,8 +521,9 @@ def cli():
     parser.add_argument('--reverse',
                         action='store_true',
                         help=("convert notebook to markdown"))
-    parser.add_argument('--with_outputs',
-                        action='store_true',
+    parser.add_argument('--nostrip',
+                        action='store_false',
+                        dest='strip_outputs',
                         help=("include outputs in markdown output"))
 
     args = parser.parse_args()
@@ -528,10 +536,8 @@ def cli():
     if args.reverse:
         with args.input_file as ip, args.output as op:
             reader = JSONReader()
-            if args.with_outputs:
-                writer = MarkdownWriter('templates/markdown.tpl')
-            else:
-                writer = MarkdownWriter('templates/markdown_stripped.tpl')
+            writer = MarkdownWriter('templates/markdown.tpl',
+                                    args.strip_outputs)
 
             notebook = reader.read(ip)
             writer.write(notebook, op)
