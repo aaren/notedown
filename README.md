@@ -57,6 +57,31 @@ play around a bit and convert back to markdown.
 NB: currently, notebook and cell metadata is not preserved in the
 conversion.
 
+### Running an IPython Notebook
+
+You can run notebooks non-interactively from the command line using
+[runipy]:
+
+    pip install runipy
+    runipy your_notebook.ipynb
+
+`runipy` can be pipelined with notedown to turn markdown into an
+executed notebook:
+
+    notedown notebook.md | runipy - executed_notebook.ipynb
+
+[runipy]: https://github.com/paulgb/runipy
+
+Alternately, you can open the notebook in your browser with
+
+    ipython notebook your_notebook.ipynb
+
+and use `Cell -> Run all` in the menu.
+
+Or, if you're using IPython 2.0:
+
+    ipython -c "%run your_notebook.ipynb"
+
 
 ### Magic
 
@@ -78,34 +103,6 @@ You can disable this with `--nomagic`.
   notebook. This requires that you have R installed with [knitr].
 
 [knitr]: yihui.name/knitr
-
-
-### What notedown does **not** do:
-
-- convert from notebook to markdown
-- run code cells
-- embed figures
-
-
-### Running an IPython Notebook
-
-You can open the notebook in your browser with
-
-    ipython notebook your_notebook.ipynb
-
-and use `Cell -> Run all` in the menu.
-
-You can run notebooks non-interactively from the command line using
-[runipy]:
-
-    pip install runipy
-    runipy your_notebook.ipynb
-
-Or, if you're using IPython 2.0:
-
-    ipython -c "%run your_notebook.ipynb"
-
-[runipy]: https://github.com/paulgb/runipy
 
 
 ### This isn't very interactive!
