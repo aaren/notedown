@@ -1,1 +1,2 @@
 include README.md
+include notedown/templates/markdown.tpl

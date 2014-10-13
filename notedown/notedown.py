@@ -566,11 +566,14 @@ def cli():
         parser.print_help()
         exit()
 
+    markdown_template = os.path.join(os.path.dirname(__file__),
+                                     'templates/markdown.tpl')
+    markdown_template = 'templates/markdown.tpl'
+
     if args.reverse:
         with args.input_file as ip, args.output as op:
             reader = JSONReader()
-            writer = MarkdownWriter('templates/markdown.tpl',
-                                    args.strip_outputs)
+            writer = MarkdownWriter(markdown_template, args.strip_outputs)
 
             notebook = reader.read(ip)
             writer.write(notebook, op)
