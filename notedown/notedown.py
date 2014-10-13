@@ -27,17 +27,17 @@ class MarkdownReader(NotebookReader):
 
     Only supports two kinds of notebook cell: code and markdown.
     """
-    ## type identifiers
+    # type identifiers
     code = u'code'
     markdown = u'markdown'
     python = u'python'
 
-    ## regular expressions to match a code block, splitting into groups
-    ## N.B you can't share group names between these patterns.
-    ## this is necessary for format agnostic code block detection.
-    ## These two pattern strings are ORed to create a master pattern
-    ## and the python re module doesn't allow sharing group names
-    ## in a single regular expression.
+    # regular expressions to match a code block, splitting into groups
+    # N.B you can't share group names between these patterns.
+    # this is necessary for format agnostic code block detection.
+    # These two pattern strings are ORed to create a master pattern
+    # and the python re module doesn't allow sharing group names
+    # in a single regular expression.
     re_flags = re.MULTILINE | re.VERBOSE
 
     # fenced code
