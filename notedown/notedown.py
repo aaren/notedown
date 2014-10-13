@@ -330,10 +330,32 @@ def string2json(string):
     return writer.writes(string, split_lines=False)
 
 
+def create_input_codeblock(cell):
+    codeblock = ('{fence}{{.python .input n={prompt_number}}}\n'
+                 '{contents}\n'
+                 '{fence}')
+    return codeblock.format(fence='```',
+                            prompt_number=cell.prompt_number,
+                            contents=cell.input)
+
+def create_output_codeblock(cell):
+    codeblock = ('{fence}{{.json .output n={prompt_number}}}\n'
+                 '{contents}\n'
+                 '{fence}')
+    return codeblock.format(fence='```',
+                            prompt_number=cell.prompt_number,
+                            contents=string2json(cell.outputs))
+
+
+
 class MarkdownWriter(NotebookWriter):
     def __init__(self, template_file):
         self.exporter = MarkdownExporter()
-        self.exporter.register_filter('json2string', string2json)
+        self.exporter.register_filter('string2json', string2json)
+        self.exporter.register_filter('create_input_codeblock',
+                                      create_input_codeblock)
+        self.exporter.register_filter('create_output_codeblock',
+                                      create_output_codeblock)
         # for some reason you don't read the template file and pass it
         # as the `template` argument when we create the instance
         self.exporter.template_file = template_file

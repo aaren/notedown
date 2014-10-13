@@ -1,9 +1,7 @@
 {% extends 'display_priority.tpl' %}
 
 {% block input %}
-```{.python .input n={{ cell.prompt_number }}}
-{{ cell.input }}
-```
+{{ cell | create_input_codeblock }}
 {% endblock input %}
 
 {% block markdowncell scoped %}
@@ -11,9 +9,7 @@
 {% endblock markdowncell %}
 
 {% block outputs %}
-```{.json .output n={{ cell.prompt_number }}}
-{{ cell.outputs | json2string }}
-```
+{{ cell | create_output_codeblock }}
 {% endblock outputs %}
 
 {% block headingcell scoped %}
