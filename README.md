@@ -194,5 +194,5 @@ syn region texinlinemaths start="\(\$\)\@<!\&\(\\\)\@<!\$\(\$\)\@!" end="\(\$\)\
 - [x] support more markdowns
 - [ ] allow other cell types?
 - [x] allow different language code cells (using %%lang magic)
-- [ ] allow code attributes? pass to cell creator?
+- [x] allow code attributes? pass to cell creator?
 - [x] code block format agnostic (fenced / indented)
