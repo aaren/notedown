@@ -113,7 +113,10 @@ class MarkdownReader(NotebookReader):
         # remove last newline
         content = content[:-1]
 
-        return {'content': content, 'type': self.code}
+        return {'content': content,
+                'type': self.code,
+                'IO': 'input',
+                'attributes': ''}
 
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
@@ -552,7 +555,7 @@ def cli():
                               "Default is to match both "
                               "fenced and indented code blocks."),
                         default=None)
-    parser.add_argument('--pre',
+    parser.add_argument('--precode',
                         nargs='+',
                         default=[],
                         help=("additional code to place at the start of the "
@@ -621,9 +624,8 @@ def cli():
         # make the .md become the input file
         args.input_file = open(output, 'r')
 
-    precode = args.pre
     if args.rmagic:
-        precode.append(r"%load_ext rmagic")
+        args.precode.append(r"%load_ext rmagic")
 
     # reader and writer classes with args and kwargs to
     # instantiate with
@@ -631,7 +633,7 @@ def cli():
                'markdown': (MarkdownReader,
                             [],
                             {'code_regex': args.code_block,
-                             'precode': precode,
+                             'precode': args.precode,
                              'magic': args.magic})
                }
     writers = {'notebook': (JSONWriter, [], {}),
