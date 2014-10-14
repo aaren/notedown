@@ -402,7 +402,7 @@ class MarkdownWriter(NotebookWriter):
         """Turn the attribute dict into an attribute string
         for the code block.
         """
-        if self.strip_outputs:
+        if self.strip_outputs or not hasattr(cell, 'prompt_number'):
             return 'python'
         else:
             attrlist = ['.python', '.input', 'n={}'.format(cell.prompt_number)]
