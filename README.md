@@ -2,7 +2,7 @@ Convert IPython Notebooks to markdown (and back)
 ------------------------------------------------
 
 [notedown] is a simple tool to create [IPython notebooks][ipython]
-from markdown.
+from markdown and r-markdown.
 
 [ipython]: http://www.ipython.org/notebook
 [notedown]: http://github.com/aaren/notedown
@@ -31,31 +31,31 @@ or the latest on github:
 There might be more reasons, but that was the main one for me.
 
 
-### Conversion from notebook to markdown
-
-Convert a notebook into markdown, stripping all outputs:
-
-    notedown input.ipynb --reverse > output.md
+### Conversion to markdown
 
 Convert a notebook into markdown, with outputs intact:
 
-    notedown input.ipynb --reverse --nostrip > output_with_outputs.md
+    notedown input.ipynb --from notebook --to markdown > output_with_outputs.md
+
+Convert a notebook into markdown, stripping all outputs:
+
+    notedown input.ipynb --from notebook --to markdown --strip > output.md
+
 
 The outputs are placed as JSON in a code-block immediately after the
 corresponding input code-block. `notedown` understands this format
 as well, so it is possible to roundtrip notebooks through json and
 markdown formats.
 
-Convert a notebook into markdown and back again, preserving cell
-outputs all the way through:
-
-    notedown input.ipynb --reverse --nostrip | notedown > same_as_input.ipynb
-
 This means it is possible to edit markdown, convert to notebook,
 play around a bit and convert back to markdown.
 
 NB: currently, notebook and cell metadata is not preserved in the
 conversion.
+
+Strip the output cells from markdown:
+
+    notedown with_output_cells.md --to markdown --strip > no_output_cells.md
 
 ### Running an IPython Notebook
 
@@ -95,12 +95,24 @@ You can disable this with `--nomagic`.
 - `--pre` lets you add arbitrary code to the start of the notebook.
   e.g. `notedown file.md --pre '%matplotlib inline' 'import numpy as np'`
 
-#### R / knitr magic
+### R-markdown
 
-- `--rmagic` will add `%load_ext rmagic` at the start of the notebook.
+You can use `notedown` to convert r-markdown as well. We just need
+to tell `notedown` to use [knitr] to convert the r-markdown.
+This requires that you have R installed with [knitr].
 
-- `--knit` passes the markdown through [knitr] before creating a
-  notebook. This requires that you have R installed with [knitr].
+Convert r-markdown into markdown:
+
+    notedown input.Rmd --to markdown --knit > output.md
+
+Convert r-markdown into an IPython notebook:
+
+    notedown input.Rmd --knit > output.ipynb
+
+- `--rmagic` will add `%load_ext rmagic` at the start of the
+  notebook, allowing you to execute code cells using the rmagic
+  extension. notedown does the appropriate `%R` cell magic
+  automatically.
 
 [knitr]: yihui.name/knitr
 
