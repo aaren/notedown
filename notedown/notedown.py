@@ -4,6 +4,8 @@ import os
 import argparse
 import json
 
+import pkg_resources
+
 import IPython.nbformat.v3.nbbase as nbbase
 from IPython.nbformat import current as nbformat
 
@@ -328,10 +330,27 @@ class MarkdownWriter(NotebookWriter):
                                       self.create_input_codeblock)
         self.exporter.register_filter('create_output_codeblock',
                                       self.create_output_codeblock)
-        # for some reason you don't read the template file and pass it
-        # as the `template` argument when we create the instance
-        self.exporter.template_file = template_file
+        self.load_template(template_file)
         self.strip_outputs = strip_outputs
+
+    def load_template(self, template_file):
+        """IPython cannot load a template from an absolute path. If
+        we want to include templates in our package they will be
+        placed on an absolute path. Here we create a temporary file
+        on a relative path and read from there after copying the
+        template to it.
+        """
+        import tempfile
+        tmp = tempfile.NamedTemporaryFile(dir='./')
+        tmp_path = os.path.relpath(tmp.name)
+
+        with open(template_file) as orig:
+            tmp.file.write(orig.read())
+            tmp.file.flush()
+
+        self.exporter.template_file = tmp_path
+        self.exporter._load_template()
+        tmp.close()
 
     def write_from_json(self, notebook_json):
         notebook = nbformat.reads_json(notebook_json)
@@ -566,9 +585,7 @@ def cli():
         parser.print_help()
         exit()
 
-    markdown_template = os.path.join(os.path.dirname(__file__),
-                                     'templates/markdown.tpl')
-    markdown_template = 'templates/markdown.tpl'
+    markdown_template =  pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
 
     if args.reverse:
         with args.input_file as ip, args.output as op:

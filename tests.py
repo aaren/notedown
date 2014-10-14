@@ -1,3 +1,5 @@
+import os
+
 import nose.tools as nt
 
 import notedown
@@ -316,7 +318,17 @@ def test_roundtrip():
     notebook = jr.reads(notebook_json)
 
     # convert notebook to markdown
-    mw = notedown.MarkdownWriter(template_file='templates/markdown_stripped.tpl')
+    mw = notedown.MarkdownWriter(template_file='notedown/templates/markdown.tpl', strip_outputs=True)
     markdown = mw.writes(notebook)
 
     nt.assert_multi_line_equal(roundtrip_markdown, markdown)
+
+
+def test_template_load():
+    """MarkdownWriter should be able to load a template from an
+    absolute path. IPython requires a relative path.
+    """
+    template_abspath = os.path.abspath('notedown/templates/markdown.tpl')
+    writer = notedown.MarkdownWriter(template_file=template_abspath)
+    import jinja2
+    assert(isinstance(writer.exporter.template, jinja2.Template))
