@@ -12,7 +12,7 @@ from IPython.nbformat import current as nbformat
 
 from IPython.nbformat.v3.rwbase import NotebookReader
 from IPython.nbformat.v3.rwbase import NotebookWriter
-from IPython.nbformat.v3.nbjson import JSONWriter
+from IPython.nbformat.v3.nbjson import JSONWriter as nbJSONWriter
 from IPython.nbformat.v3.nbjson import JSONReader
 
 from IPython.nbconvert import MarkdownExporter
@@ -23,7 +23,6 @@ languages = ['python', 'r', 'ruby', 'bash']
 markdown_template =  pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
 
 # TODO: RMarkdown reader, using knitr class internally
-# TODO: subclass JSONWriter to allow stripping outputs from notebooks.
 # TODO: fix markdown to markdown conversion
 
 # you can think of notedown as a document converter that uses the
@@ -387,7 +386,7 @@ class MarkdownWriter(NotebookWriter):
         # but there is a special encoder in ipython that we can get at
         # through the jsonwriter, so we'll use that. this is a bit hacky
         # as we are pretending that the string is actually a notebook.
-        writer = JSONWriter()
+        writer = nbJSONWriter()
         return writer.writes(string, split_lines=False)
 
     def create_input_codeblock(self, cell):
@@ -441,6 +440,26 @@ class MarkdownWriter(NotebookWriter):
                     attrlist.append(k + '=' + v)
 
             return '{' + ' '.join(attrlist) + '}'
+
+
+class JSONWriter(nbJSONWriter):
+    """Subclass the standard JSONWriter to allow stripping
+    of outputs.
+    """
+    def __init__(self, strip_outputs=False):
+        self.strip_outputs = strip_outputs
+
+    def strip_output_cells(self, notebook):
+        ws = notebook.worksheets[0]
+        for cell in ws.cells:
+            cell.outputs = []
+        return notebook
+
+    def writes(self, notebook):
+        if self.strip_outputs:
+            notebook = self.strip_output_cells(notebook)
+
+        return super(JSONWriter, self).writes(notebook)
 
 
 class CodeMagician(object):
@@ -648,7 +667,7 @@ def cli():
                              'precode': args.precode,
                              'magic': args.magic})
                }
-    writers = {'notebook': (JSONWriter, [], {}),
+    writers = {'notebook': (JSONWriter, [args.strip_outputs], {}),
                'markdown': (MarkdownWriter,
                             [markdown_template, args.strip_outputs],
                             {})
