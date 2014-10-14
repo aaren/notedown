@@ -65,23 +65,12 @@ You can run notebooks non-interactively from the command line using
     pip install runipy
     runipy your_notebook.ipynb
 
-`runipy` can be pipelined with notedown to turn markdown into an
+`runipy` can be used with notedown to turn markdown into an
 executed notebook:
 
-    notedown notebook.md | runipy - executed_notebook.ipynb
+    notedown notebook.md --execute > executed_notebook.ipynb
 
 [runipy]: https://github.com/paulgb/runipy
-
-Alternately, you can open the notebook in your browser with
-
-    ipython notebook your_notebook.ipynb
-
-and use `Cell -> Run all` in the menu.
-
-Or, if you're using IPython 2.0:
-
-    ipython -c "%run your_notebook.ipynb"
-
 
 ### Magic
 
