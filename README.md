@@ -117,6 +117,10 @@ Convert r-markdown into an IPython notebook:
 [knitr]: yihui.name/knitr
 
 
+### I can't put a literal code block in my markdown!
+
+Not right now, no. Notedown isn't very clever.
+
 ### This isn't very interactive!
 
 No, it isn't. Notedown takes markdown and turns it into an IPython
@@ -158,10 +162,6 @@ nmap <leader>b [b,f
 " send current code block to ipython with <leader>p
 nmap <leader>p ,b<C-s>
 ```
-
-### I can't put a literal code block in my markdown!
-
-Not right now, no. Notedown isn't very clever.
 
 
 ### Where's my syntax highlighting?!
