@@ -3,6 +3,7 @@ import sys
 import os
 import argparse
 import json
+import tempfile
 
 import pkg_resources
 
@@ -20,6 +21,14 @@ from IPython.nbconvert import MarkdownExporter
 languages = ['python', 'r', 'ruby', 'bash']
 
 markdown_template =  pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
+
+# TODO: RMarkdown reader, using knitr class internally
+# TODO: subclass JSONWriter to allow stripping outputs from notebooks.
+# TODO: fix markdown to markdown conversion
+
+# you can think of notedown as a document converter that uses the
+# ipython notebook as its internal format
+
 
 
 class MarkdownReader(NotebookReader):
@@ -349,7 +358,6 @@ class MarkdownWriter(NotebookWriter):
         on a relative path and read from there after copying the
         template to it.
         """
-        import tempfile
         tmp = tempfile.NamedTemporaryFile(dir='./')
         tmp_path = os.path.relpath(tmp.name)
 
@@ -506,29 +514,47 @@ class PandocAttributeParser(object):
         return attr_dict
 
 
-def knit(fin, fout,
-         opts_knit='progress=FALSE, verbose=FALSE',
-         opts_chunk='eval=FALSE'):
-    """Use knitr to convert r markdown (or anything knitr supports)
-    to markdown.
+class Knitr(object):
+    def knit(self, input_file, opts_chunk=None):
+        """Use Knitr to convert the r-markdown input_file
+        into markdown, returning a file object.
+        """
+        # use temporary files at both ends to allow stdin / stdout
+        tmp_in = tempfile.NamedTemporaryFile()
+        tmp_out = tempfile.NamedTemporaryFile()
 
-    fin / fout - strings, input / output filenames.
-    opts_knit - string, options to pass to knit
-    opts_shunk - string, chunk options
+        tmp_in.file.write(input_file.read())
+        tmp_in.file.flush()
+        tmp_in.file.seek(0)
 
-    options are passed verbatim to knitr:knit running in Rscript.
-    """
-    rcmd = ('Rscript -e '
-            '\'sink("/dev/null");'
-              'library(knitr);'
-              'opts_knit$set({opts_knit});'
-              'opts_chunk$set({opts_chunk});'
-              'knit("{input}", output="{output}")\' '
-            '2> /dev/null')
+        self._knit(tmp_in.name, tmp_out.name, opts_chunk)
+        tmp_out.file.flush()
+        return tmp_out
 
-    cmd = rcmd.format(input=fin, output=fout,
-                      opts_knit=opts_knit, opts_chunk=opts_chunk)
-    os.system(cmd)
+    @staticmethod
+    def _knit(fin, fout,
+              opts_knit='progress=FALSE, verbose=FALSE',
+              opts_chunk='eval=FALSE'):
+        """Use knitr to convert r markdown (or anything knitr supports)
+        to markdown.
+
+        fin / fout - strings, input / output filenames.
+        opts_knit - string, options to pass to knit
+        opts_shunk - string, chunk options
+
+        options are passed verbatim to knitr:knit running in Rscript.
+        """
+        rcmd = ('Rscript -e '
+                '\'sink("/dev/null");'
+                'library(knitr);'
+                'opts_knit$set({opts_knit});'
+                'opts_chunk$set({opts_chunk});'
+                'knit("{input}", output="{output}")\' '
+                '2> /dev/null')
+
+        cmd = rcmd.format(input=fin, output=fout,
+                          opts_knit=opts_knit, opts_chunk=opts_chunk)
+        os.system(cmd)
 
 
 def cli():
@@ -603,26 +629,12 @@ def cli():
         parser.print_help()
         exit()
 
-    # temporary output file because knitr works best with files
-    tmp_out = ".knitr.tmp.output"
-    # maybe think about having a Knitr class that uses a tempfile,
-    # with a knit method that returns a string
-    if args.knit and args.output is sys.stdout:
-        output = tmp_out
-
-    elif args.knit and not args.output:
-        markdown = os.path.splitext(args.input_file.name)[0] + '.md'
-        notebook = os.path.splitext(args.input_file.name)[0] + '.ipynb'
-        output = markdown
-        args.output = open(notebook, 'w')
-
-    elif args.knit and args.output:
-        output = args.output.name
-
+    # pre-process markdown by using knitr on it
     if args.knit:
-        knit(args.input_file.name, output, opts_chunk=args.knit)
-        # make the .md become the input file
-        args.input_file = open(output, 'r')
+        knitr = Knitr()
+        input_file = knitr.knit(args.input_file, opts_chunk=args.knit)
+    else:
+        input_file = args.input_file
 
     if args.rmagic:
         args.precode.append(r"%load_ext rmagic")
@@ -651,12 +663,10 @@ def cli():
     reader = Reader(*rargs, **rkwargs)
     writer = Writer(*wargs, **wkwargs)
 
-    with args.input_file as ip, args.output as op:
+    with input_file as ip, args.output as op:
         notebook = reader.read(ip)
         writer.write(notebook, op)
 
-    if os.path.exists(tmp_out) and args.knit and args.output is sys.stdout:
-        os.remove(tmp_out)
 
 if __name__ == '__main__':
     cli()
