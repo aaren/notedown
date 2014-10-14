@@ -649,6 +649,26 @@ def cli():
                         help="output file, (default STDOUT)",
                         type=argparse.FileType('w'),
                         default=sys.stdout)
+    parser.add_argument('--from',
+                        default='markdown',
+                        dest='informat',
+                        choices=('notebook', 'markdown'),
+                        help=("format to convert from, defaults to markdown"))
+    parser.add_argument('--to',
+                        default='notebook',
+                        dest='outformat',
+                        choices=('notebook', 'markdown'),
+                        help=("format to convert to, defaults to notebook"))
+    parser.add_argument('--reverse',
+                        action='store_true',
+                        help=("alias for --from notebook --to markdown"))
+    parser.add_argument('--run',
+                        action='store_true',
+                        help=("run the notebook using runipy"))
+    parser.add_argument('--strip',
+                        action='store_true',
+                        dest='strip_outputs',
+                        help=("strip output cells"))
     parser.add_argument('--precode',
                         nargs='+',
                         default=[],
@@ -670,26 +690,6 @@ def cli():
                         action='store_false',
                         dest='magic',
                         help=("disable code magic."))
-    parser.add_argument('--strip',
-                        action='store_true',
-                        dest='strip_outputs',
-                        help=("strip output cells"))
-    parser.add_argument('--from',
-                        default='markdown',
-                        dest='informat',
-                        choices=('notebook', 'markdown'),
-                        help=("format to convert from, defaults to markdown"))
-    parser.add_argument('--to',
-                        default='notebook',
-                        dest='outformat',
-                        choices=('notebook', 'markdown'),
-                        help=("format to convert to, defaults to notebook"))
-    parser.add_argument('--reverse',
-                        action='store_true',
-                        help=("alias for --from notebook --to markdown"))
-    parser.add_argument('--run',
-                        action='store_true',
-                        help=("run the notebook using runipy"))
     parser.add_argument('--code_block',
                         help=("choose to match only 'fenced' or 'indented' "
                               "code blocks or give a regular expression to "
