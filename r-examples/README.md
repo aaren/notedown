@@ -24,12 +24,9 @@ r-notebook like this:
 [runipy]: https://github.com/paulgb/runipy
 
 
-With [newer versions][new_runipy] of runipy, you can do this all in
-a single line:
+You can do this all in a single line:
 
-    notedown r-example.Rmd --knit --rmagic | runipy - r-example.ipynb
-
-[new_runipy]: https://github.com/paulgb/runipy/commit/566f32c
+    notedown r-example.Rmd --execute --knit --rmagic > r-example.ipynb
 
 
 When IPython gets a R kernel, this will be even simpler.
