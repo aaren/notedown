@@ -71,11 +71,3 @@ ggplot(iris, aes(x = Sepal.Length, y = Petal.Length, color = Species)) +
   geom_point() + 
   geom_smooth(method = 'lm', se = F)
 ```
-
-
-
-
-
-
-
-
