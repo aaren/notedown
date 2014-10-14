@@ -323,7 +323,11 @@ class MarkdownReader(NotebookReader):
 
 
 class MarkdownWriter(NotebookWriter):
+    """Write a notebook into markdown."""
     def __init__(self, template_file, strip_outputs=True):
+        """template_file - location of jinja template to use for export
+        strip_outputs - whether to remove output cells from the output
+        """
         self.exporter = MarkdownExporter()
         self.exporter.register_filter('string2json', self.string2json)
         self.exporter.register_filter('create_input_codeblock',
@@ -393,11 +397,18 @@ class MarkdownWriter(NotebookWriter):
                                 contents=self.string2json(cell.outputs))
 
     def create_attributes(self, cell):
+        """Turn the attribute dict into an attribute string
+        for the code block.
+        """
         if self.strip_outputs:
             return 'python'
         else:
             attrlist = ['.python', '.input', 'n={}'.format(cell.prompt_number)]
-            attrs = cell.metadata['attributes'].copy()
+
+            try:
+                attrs = cell.metadata['attributes'].copy()
+            except KeyError:
+                attrs = {'id': '', 'classes': []}
 
             id = attrs.pop('id')
             if id:
