@@ -577,6 +577,18 @@ class Knitr(object):
         os.system(cmd)
 
 
+def execute(notebook):
+    """Run a notebook using runipy."""
+    try:
+        from runipy.notebook_runner import NotebookRunner
+    except ImportError:
+        raise('You need runipy installed to execute notebooks!'
+              'try `pip install runipy`')
+
+    runner = NotebookRunner(notebook)
+    runner.run_notebook()
+
+
 def cli():
     """Execute for command line usage."""
     description = "Create an IPython notebook from markdown."
@@ -624,7 +636,7 @@ def cli():
                         help=("disable code magic."))
     parser.add_argument('--reverse',
                         action='store_true',
-                        help=("convert notebook to markdown"))
+                        help=("alias for --from notebook --to markdown"))
     parser.add_argument('--strip',
                         action='store_true',
                         dest='strip_outputs',
@@ -641,6 +653,9 @@ def cli():
                         dest='outformat',
                         choices=('notebook', 'markdown'),
                         help=("format to convert to"))
+    parser.add_argument('--execute',
+                        action='store_true',
+                        help=("run the notebook using runipy"))
 
     args = parser.parse_args()
 
@@ -685,6 +700,8 @@ def cli():
 
     with input_file as ip, args.output as op:
         notebook = reader.read(ip)
+        if args.execute:
+            execute(notebook)
         writer.write(notebook, op)
 
 
