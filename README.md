@@ -68,7 +68,7 @@ You can run notebooks non-interactively from the command line using
 `runipy` can be used with notedown to turn markdown into an
 executed notebook:
 
-    notedown notebook.md --execute > executed_notebook.ipynb
+    notedown notebook.md --run > executed_notebook.ipynb
 
 [runipy]: https://github.com/paulgb/runipy
 

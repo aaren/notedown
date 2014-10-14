@@ -575,17 +575,64 @@ class Knitr(object):
         os.system(cmd)
 
 
-def execute(notebook):
+def run(notebook):
     """Run a notebook using runipy."""
     try:
         from runipy.notebook_runner import NotebookRunner
     except ImportError:
-        raise('You need runipy installed to execute notebooks!'
+        raise('You need runipy installed to run notebooks!'
               'try `pip install runipy`')
 
     runner = NotebookRunner(notebook)
     runner.run_notebook()
 
+
+examples = """
+Example usage of notedown
+-------------------------
+
+Convert markdown into notebook:
+
+    notedown input.md > output.ipynb
+
+    notedown input.md --output output.ipynb
+
+
+Convert a notebook into markdown, with outputs intact:
+
+    notedown input.ipynb --from notebook --to markdown > output_with_outputs.md
+
+
+Convert a notebook into markdown, stripping all outputs:
+
+    notedown input.ipynb --from notebook --to markdown --strip > output.md
+
+
+Strip the output cells from markdown:
+
+    notedown with_output_cells.md --to markdown --strip > no_output_cells.md
+
+
+Convert from markdown and execute using runipy:
+
+    notedown input.md --run > executed_notebook.ipynb
+
+
+Convert r-markdown into markdown:
+
+    notedown input.Rmd --to markdown --knit > output.md
+
+
+Convert r-markdown into an IPython notebook:
+
+    notedown input.Rmd --knit > output.ipynb
+
+
+Convert r-markdown into a notebook with the outputs computed, using
+the rmagic extension to execute the code blocks:
+
+    notedown input.Rmd --knit --rmagic --run > executed_output.ipynb
+"""
 
 def cli():
     """Execute for command line usage."""
@@ -599,18 +646,9 @@ def cli():
                         type=argparse.FileType('r'),
                         default=sys.stdin)
     parser.add_argument('--output',
-                        nargs='?',
                         help="output file, (default STDOUT)",
                         type=argparse.FileType('w'),
                         default=sys.stdout)
-    parser.add_argument('--code_block',
-                        help=("choose to match only 'fenced' or 'indented' "
-                              "code blocks or give a regular expression to "
-                              "match code blocks. Will be compiled with "
-                              "re.MULTILINE | re.VERBOSE."
-                              "Default is to match both "
-                              "fenced and indented code blocks."),
-                        default=None)
     parser.add_argument('--precode',
                         nargs='+',
                         default=[],
@@ -627,35 +665,47 @@ def cli():
     parser.add_argument('--rmagic',
                         action='store_true',
                         help=("autoload the rmagic extension. Synonym for "
-                              "--pre '%%load_ext rmagic'"))
+                              "--precode '%%load_ext rmagic'"))
     parser.add_argument('--nomagic',
                         action='store_false',
                         dest='magic',
                         help=("disable code magic."))
-    parser.add_argument('--reverse',
-                        action='store_true',
-                        help=("alias for --from notebook --to markdown"))
     parser.add_argument('--strip',
                         action='store_true',
                         dest='strip_outputs',
-                        help=("include outputs in markdown output"))
+                        help=("strip output cells"))
     parser.add_argument('--from',
-                        nargs='?',
                         default='markdown',
                         dest='informat',
                         choices=('notebook', 'markdown'),
-                        help=("format to convert from"))
+                        help=("format to convert from, defaults to markdown"))
     parser.add_argument('--to',
-                        nargs='?',
                         default='notebook',
                         dest='outformat',
                         choices=('notebook', 'markdown'),
-                        help=("format to convert to"))
-    parser.add_argument('--execute',
+                        help=("format to convert to, defaults to notebook"))
+    parser.add_argument('--reverse',
+                        action='store_true',
+                        help=("alias for --from notebook --to markdown"))
+    parser.add_argument('--run',
                         action='store_true',
                         help=("run the notebook using runipy"))
+    parser.add_argument('--code_block',
+                        help=("choose to match only 'fenced' or 'indented' "
+                              "code blocks or give a regular expression to "
+                              "match code blocks. Will be compiled with "
+                              "re.MULTILINE | re.VERBOSE. Default is to "
+                              "match both fenced and indented code blocks."),
+                        default=None)
+    parser.add_argument('--examples',
+                        help=('show example usage'),
+                        action='store_true')
 
     args = parser.parse_args()
+
+    if args.examples:
+        print examples
+        exit()
 
     # if no stdin and no input file
     if args.input_file.isatty():
@@ -698,8 +748,8 @@ def cli():
 
     with input_file as ip, args.output as op:
         notebook = reader.read(ip)
-        if args.execute:
-            execute(notebook)
+        if args.run:
+            run(notebook)
         writer.write(notebook, op)
 
 

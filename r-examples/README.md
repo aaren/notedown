@@ -26,7 +26,7 @@ r-notebook like this:
 
 You can do this all in a single line:
 
-    notedown r-example.Rmd --execute --knit --rmagic > r-example.ipynb
+    notedown r-example.Rmd --run --knit --rmagic > r-example.ipynb
 
 
 When IPython gets a R kernel, this will be even simpler.
