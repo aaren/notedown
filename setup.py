@@ -16,7 +16,7 @@ setup(
     author_email='dev@aaren.me',
     license='BSD 2-Clause',
     url='http://github.com/aaren/notedown',
-    install_requires=['ipython', ],
+    install_requires=['ipython[all]', ],
     entry_points={'console_scripts': ['notedown = notedown:cli', ]},
     package_dir={'notedown': 'notedown'},
     package_data={'notedown': ['templates/markdown.tpl']},
