@@ -20,14 +20,13 @@ from IPython.nbconvert import MarkdownExporter
 
 languages = ['python', 'r', 'ruby', 'bash']
 
-markdown_template =  pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
+markdown_template = pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
 
 # TODO: RMarkdown reader, using knitr class internally
 # TODO: fix markdown to markdown conversion
 
 # you can think of notedown as a document converter that uses the
 # ipython notebook as its internal format
-
 
 
 class MarkdownReader(NotebookReader):
