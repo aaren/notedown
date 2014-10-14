@@ -19,6 +19,8 @@ from IPython.nbconvert import MarkdownExporter
 
 languages = ['python', 'r', 'ruby', 'bash']
 
+markdown_template =  pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
+
 
 class MarkdownReader(NotebookReader):
     """Import markdown to IPython Notebook.
@@ -578,33 +580,24 @@ def cli():
                         action='store_true',
                         dest='strip_outputs',
                         help=("include outputs in markdown output"))
-    parser.add_argument('--to',
-                        nargs='?',
-                        default='notebook',
-                        choices=('notebook', 'markdown'),
-                        help=("format to convert to"))
     parser.add_argument('--from',
                         nargs='?',
                         default='markdown',
+                        dest='informat',
                         choices=('notebook', 'markdown'),
                         help=("format to convert from"))
+    parser.add_argument('--to',
+                        nargs='?',
+                        default='notebook',
+                        dest='outformat',
+                        choices=('notebook', 'markdown'),
+                        help=("format to convert to"))
 
     args = parser.parse_args()
 
     # if no stdin and no input file
     if args.input_file.isatty():
         parser.print_help()
-        exit()
-
-    markdown_template =  pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
-
-    if args.reverse:
-        with args.input_file as ip, args.output as op:
-            reader = JSONReader()
-            writer = MarkdownWriter(markdown_template, args.strip_outputs)
-
-            notebook = reader.read(ip)
-            writer.write(notebook, op)
         exit()
 
     # temporary output file because knitr works best with files
@@ -632,12 +625,31 @@ def cli():
     if args.rmagic:
         precode.append(r"%load_ext rmagic")
 
+    # reader and writer classes with args and kwargs to
+    # instantiate with
+    readers = {'notebook': (JSONReader, [], {}),
+               'markdown': (MarkdownReader,
+                            [],
+                            {'code_regex': args.code_block,
+                             'precode': precode,
+                             'magic': args.magic})
+               }
+    writers = {'notebook': (JSONWriter, [], {}),
+               'markdown': (MarkdownWriter,
+                            [markdown_template, args.strip_outputs],
+                            {})
+               }
+
+    if args.reverse:
+        args.informat = 'notebook'
+        args.outformat = 'markdown'
+
+    Reader, rargs, rkwargs = readers[args.informat]
+    Writer, wargs, wkwargs = writers[args.outformat]
+    reader = Reader(*rargs, **rkwargs)
+    writer = Writer(*wargs, **wkwargs)
+
     with args.input_file as ip, args.output as op:
-        kwargs = {'code_regex': args.code_block,
-                  'precode': precode,
-                  'magic': args.magic}
-        reader = MarkdownReader(**kwargs)
-        writer = JSONWriter()
         notebook = reader.read(ip)
         writer.write(notebook, op)
 
