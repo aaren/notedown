@@ -23,7 +23,6 @@ languages = ['python', 'r', 'ruby', 'bash']
 markdown_template = pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
 
 # TODO: RMarkdown reader, using knitr class internally
-# TODO: fix markdown to markdown conversion
 
 # you can think of notedown as a document converter that uses the
 # ipython notebook as its internal format
@@ -144,14 +143,17 @@ class MarkdownReader(NotebookReader):
             if (block['type'] == self.code) and (block['IO'] == 'input'):
                 kwargs = {'input': block['content']}
                 code_cell = nbbase.new_code_cell(**kwargs)
+
                 if block['attributes'] and self.attrs == 'pandoc':
-                    code_cell.metadata = {'attributes': block['attributes']}
+                    code_cell.metadata = nbbase.NotebookNode({'attributes': block['attributes']})
+
                 cells.append(code_cell)
 
             elif (block['type'] == self.code
                   and block['IO'] == 'output'
                   and cells[-1].cell_type == 'code'):
-                cells[-1].outputs = json.loads(block['content'])
+                cells[-1].outputs = [nbbase.NotebookNode(output)
+                                     for output in json.loads(block['content'])]
                 cells[-1].prompt_number = block['attributes']['n']
 
             elif block['type'] == self.markdown:

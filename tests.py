@@ -332,3 +332,10 @@ def test_template_load():
     writer = notedown.MarkdownWriter(template_file=template_abspath)
     import jinja2
     assert(isinstance(writer.exporter.template, jinja2.Template))
+
+
+def test_markdown_markdown():
+    mr = notedown.MarkdownReader()
+    mw = notedown.MarkdownWriter(notedown.markdown_template)
+    nb = mr.reads(roundtrip_markdown)
+    mw.writes(nb)
