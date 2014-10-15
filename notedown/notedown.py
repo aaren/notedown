@@ -650,15 +650,15 @@ def cli():
                         type=argparse.FileType('w'),
                         default=sys.stdout)
     parser.add_argument('--from',
-                        default='markdown',
                         dest='informat',
                         choices=('notebook', 'markdown'),
-                        help=("format to convert from, defaults to markdown"))
+                        help=("format to convert from, defaults to markdown "
+                              "or file extension"))
     parser.add_argument('--to',
-                        default='notebook',
                         dest='outformat',
                         choices=('notebook', 'markdown'),
-                        help=("format to convert to, defaults to notebook"))
+                        help=("format to convert to, defaults to notebook "
+                              "or file extension"))
     parser.add_argument('--reverse',
                         action='store_true',
                         help=("alias for --from notebook --to markdown"))
@@ -741,8 +741,11 @@ def cli():
         args.informat = 'notebook'
         args.outformat = 'markdown'
 
-    Reader, rargs, rkwargs = readers[args.informat]
-    Writer, wargs, wkwargs = writers[args.outformat]
+    informat = args.informat or ftdetect(args.input_file.name) or 'markdown'
+    outformat = args.outformat or ftdetect(args.output.name) or 'notebook'
+
+    Reader, rargs, rkwargs = readers[informat]
+    Writer, wargs, wkwargs = writers[outformat]
     reader = Reader(*rargs, **rkwargs)
     writer = Writer(*wargs, **wkwargs)
 
@@ -751,6 +754,21 @@ def cli():
         if args.run:
             run(notebook)
         writer.write(notebook, op)
+
+
+def ftdetect(filename):
+    """Determine if filename is markdown or notebook,
+    based on the file extension.
+    """
+    _, extension = os.path.splitext(filename)
+    md_exts = ['.md', '.markdown', '.mkd', '.mdown', '.mkdn', '.Rmd']
+    nb_exts = ['.ipynb']
+    if extension in md_exts:
+        return 'markdown'
+    elif extension in nb_exts:
+        return 'notebook'
+    else:
+        return None
 
 
 if __name__ == '__main__':
