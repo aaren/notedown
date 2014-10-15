@@ -314,6 +314,11 @@ class MarkdownReader(NotebookReader):
                 block['IO'] = 'input'
             elif 'output' and 'json' in classes:
                 block['IO'] = 'output'
+            else:
+                block['type'] = self.markdown
+                block['content'] = block['fence'] + '\n' + block['content'] \
+                                    + '\n' + block['fence']
+
         else:
             block['IO'] = 'input'
 
