@@ -25,6 +25,8 @@ markdown_template = pkg_resources.resource_filename('notedown', 'templates/markd
 # you can think of notedown as a document converter that uses the
 # ipython notebook as its internal format
 
+# TODO: autodetect file format from extension
+
 
 class MarkdownReader(NotebookReader):
     """Import markdown to IPython Notebook.
@@ -336,7 +338,8 @@ class MarkdownReader(NotebookReader):
 
 class MarkdownWriter(NotebookWriter):
     """Write a notebook into markdown."""
-    def __init__(self, template_file, strip_outputs=True):
+    def __init__(self, template_file, strip_outputs=True,
+                 write_outputs=False):
         """template_file - location of jinja template to use for export
         strip_outputs - whether to remove output cells from the output
         """
@@ -346,8 +349,13 @@ class MarkdownWriter(NotebookWriter):
                                       self.create_input_codeblock)
         self.exporter.register_filter('create_output_codeblock',
                                       self.create_output_codeblock)
+        self.exporter.register_filter('create_output_block',
+                                      self.create_output_block)
         self.load_template(template_file)
         self.strip_outputs = strip_outputs
+
+        self.write_outputs = write_outputs
+        self.output_dir = './figures/'
 
     def load_template(self, template_file):
         """IPython cannot load a template from an absolute path. If
@@ -373,8 +381,28 @@ class MarkdownWriter(NotebookWriter):
 
     def writes(self, notebook):
         body, resources = self.exporter.from_notebook_node(notebook)
+        self.resources = resources
+
+        if self.write_outputs:
+            self.write_resources(resources)
+
         # remove any blank lines added at start and end by template
         return re.sub(r'\A\s*\n|^\s*\Z', '', body)
+
+    def write_resources(self, resources):
+        """Write the output data in resources returned by exporter
+        to files.
+        """
+        for filename, data in resources.get('outputs', {}).items():
+            # Determine where to write the file to
+            dest = os.path.join(self.output_dir, filename)
+            path = os.path.dirname(dest)
+            if path and not os.path.isdir(path):
+                os.makedirs(path)
+
+            # Write file
+            with open(dest, 'wb') as f:
+                f.write(data)
 
     # --- filter functions to be used in the output template --- #
     def string2json(self, string):
@@ -392,14 +420,18 @@ class MarkdownWriter(NotebookWriter):
         codeblock = ('\n{fence}{attributes}\n'
                      '{cell.input}\n'
                      '{fence}\n')
+        attrs = self.create_attributes(cell, input_cell=True)
+        return codeblock.format(attributes=attrs, fence='```', cell=cell)
 
-        return codeblock.format(attributes=self.create_attributes(cell),
-                                fence='```',
-                                cell=cell)
-
-    def create_output_codeblock(self, cell):
+    def create_output_block(self, cell):
         if self.strip_outputs:
             return ''
+        elif self.write_outputs:
+            return self.create_markdown_figure(cell)
+        else:
+            return self.create_output_codeblock(cell)
+
+    def create_output_codeblock(self, cell):
         codeblock = ('\n{fence}{{.json .output n={prompt_number}}}\n'
                      '{contents}\n'
                      '{fence}\n')
@@ -407,38 +439,51 @@ class MarkdownWriter(NotebookWriter):
                                 prompt_number=cell.prompt_number,
                                 contents=self.string2json(cell.outputs))
 
-    def create_attributes(self, cell):
+    def create_markdown_figure(self, cell):
+        display_outputs = [output for output in cell.outputs
+                           if output.output_type == 'display_data']
+        # hack, not sure what else to do.
+        filename = display_outputs[0].png_filename
+        attrs = self.create_attributes(cell)
+        filepath = os.path.join(self.output_dir, filename)
+        return '\n![caption]({}){}\n'.format(filepath, attrs)
+
+    def create_attributes(self, cell, input_cell=False):
         """Turn the attribute dict into an attribute string
         for the code block.
         """
         if self.strip_outputs or not hasattr(cell, 'prompt_number'):
             return 'python'
-        else:
+
+        elif input_cell:
             attrlist = ['.python', '.input', 'n={}'.format(cell.prompt_number)]
 
-            try:
-                attrs = cell.metadata['attributes'].copy()
-            except KeyError:
-                attrs = {'id': '', 'classes': []}
+        else:
+            attrlist = []
 
-            id = attrs.pop('id')
-            if id:
-                attrlist.append('#' + id)
+        try:
+            attrs = cell.metadata['attributes'].copy()
+        except KeyError:
+            attrs = {'id': '', 'classes': []}
 
-            classes = attrs.pop('classes')
-            for cls in classes:
-                if cls in ('python', 'input'):
-                    pass
-                else:
-                    attrlist.append('.' + cls)
+        id = attrs.pop('id')
+        if id:
+            attrlist.append('#' + id)
 
-            for k, v in attrs.items():
-                if k == 'n':
-                    pass
-                else:
-                    attrlist.append(k + '=' + v)
+        classes = attrs.pop('classes')
+        for cls in classes:
+            if cls in ('python', 'input'):
+                pass
+            else:
+                attrlist.append('.' + cls)
 
-            return '{' + ' '.join(attrlist) + '}'
+        for k, v in attrs.items():
+            if k == 'n':
+                pass
+            else:
+                attrlist.append(k + '=' + v)
+
+        return '{' + ' '.join(attrlist) + '}'
 
 
 class JSONWriter(nbJSONWriter):
@@ -700,6 +745,9 @@ def cli():
     parser.add_argument('--examples',
                         help=('show example usage'),
                         action='store_true')
+    parser.add_argument('--figures',
+                        help=('turn outputs into figures'),
+                        action='store_true')
 
     args = parser.parse_args()
 
@@ -734,7 +782,7 @@ def cli():
     writers = {'notebook': (JSONWriter, [args.strip_outputs], {}),
                'markdown': (MarkdownWriter,
                             [markdown_template, args.strip_outputs],
-                            {})
+                            {'write_outputs': args.figures})
                }
 
     if args.reverse:
