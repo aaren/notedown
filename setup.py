@@ -1,16 +1,9 @@
 from setuptools import setup
 
-try:
-    import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst')
-except (IOError, ImportError):
-    long_description = ''
-
 setup(
     name="notedown",
-    version='1.2.2',
+    version='1.2.5',
     description="Convert markdown to IPython notebook.",
-    long_description=long_description,
     packages=['notedown'],
     author="Aaron O'Leary",
     author_email='dev@aaren.me',
