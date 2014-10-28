@@ -740,13 +740,6 @@ def cli():
                         action='store_false',
                         dest='magic',
                         help=("disable code magic."))
-    parser.add_argument('--code_block',
-                        help=("choose to match only 'fenced' or 'indented' "
-                              "code blocks or give a regular expression to "
-                              "match code blocks. Will be compiled with "
-                              "re.MULTILINE | re.VERBOSE. Default is to "
-                              "match both fenced and indented code blocks."),
-                        default=None)
     parser.add_argument('--examples',
                         help=('show example usage'),
                         action='store_true')
@@ -780,8 +773,7 @@ def cli():
     readers = {'notebook': (JSONReader, [], {}),
                'markdown': (MarkdownReader,
                             [],
-                            {'code_regex': args.code_block,
-                             'precode': args.precode,
+                            {'precode': args.precode,
                              'magic': args.magic})
                }
     writers = {'notebook': (JSONWriter, [args.strip_outputs], {}),
