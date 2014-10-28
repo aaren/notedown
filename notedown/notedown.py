@@ -21,8 +21,6 @@ languages = ['python', 'r', 'ruby', 'bash']
 # you can think of notedown as a document converter that uses the
 # ipython notebook as its internal format
 
-# TODO: autodetect file format from extension
-
 
 class MarkdownReader(NotebookReader):
     """Import markdown to IPython Notebook.
