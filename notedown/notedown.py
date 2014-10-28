@@ -84,11 +84,18 @@ class MarkdownReader(NotebookReader):
                          Default is to look for both indented and fenced
                          code blocks.
 
+            precode    - list of lines of code to put at the start of the
+                         document, e.g. ['%matplotlib inline',
+                                         'import numpy as np']
+
+            magic      - whether to use code cell language magic, e.g.
+                         put '%bash' at start of cells that have language
+                         'bash'
+
             rmagic     - whether to place '%load_ext rmagic' at the start
                          of the notebook.
 
-            load_ext   - list of extensions to load with '%load_ext' at the
-                         start of the notebook.
+            attrs      - attribute type of code blocks e.g. 'pandoc'
         """
         if not code_regex:
             self.code_regex = r"({}|{})".format(self.fenced_regex,
