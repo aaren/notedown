@@ -262,10 +262,9 @@ class MarkdownReader(NotebookReader):
         """
         # dedent indented code blocks
         if 'indent' in block and block['indent']:
-            indent = r"\n" + block['indent']
-            block['content'] = re.sub(indent,
-                                      '\n',
-                                      block['icontent']).lstrip(block['indent'])
+            indent = r'^' + block['indent']
+            block['content'] = re.sub(indent, '', block['icontent'],
+                                      flags=re.MULTILINE)
 
         # extract attributes from fenced code blocks
         if 'attributes' in block and block['attributes']:
