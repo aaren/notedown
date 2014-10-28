@@ -135,8 +135,8 @@ def cli_parser():
     parser.add_argument('--examples',
                         help=('show example usage'),
                         action='store_true')
-    parser.add_argument('--figures',
-                        help=('turn outputs into figures'),
+    parser.add_argument('--render',
+                        help=('render outputs'),
                         action='store_true')
     parser.add_argument('--template',
                         help=('template file'))
@@ -174,7 +174,7 @@ def cli():
     if args.rmagic:
         args.precode.append(r"%load_ext rmagic")
 
-    if args.figures:
+    if args.render:
         template_file = markdown_figure_template
     else:
         template_file = markdown_template
@@ -191,8 +191,8 @@ def cli():
                }
     writers = {'notebook': (JSONWriter, [args.strip_outputs], {}),
                'markdown': (MarkdownWriter,
-                            [template_file, args.strip_outputs],
-                            {'write_outputs': args.figures})
+                            [template_file],
+                            {'strip_outputs': args.strip_outputs})
                }
 
     if args.reverse:

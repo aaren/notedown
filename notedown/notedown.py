@@ -21,7 +21,6 @@ languages = ['python', 'r', 'ruby', 'bash']
 # you can think of notedown as a document converter that uses the
 # ipython notebook as its internal format
 
-
 class MarkdownReader(NotebookReader):
     """Import markdown to IPython Notebook.
 
@@ -349,6 +348,10 @@ class MarkdownWriter(NotebookWriter):
                                       self.create_output_codeblock)
         self.exporter.register_filter('create_output_block',
                                       self.create_output_block)
+        self.exporter.register_filter('create_attributes',
+                                      self.create_attributes)
+        self.exporter.register_filter('dequote', self.dequote)
+        self.exporter.register_filter('data2uri', self.data2uri)
         self.load_template(template_file)
         self.strip_outputs = strip_outputs
 
@@ -418,14 +421,12 @@ class MarkdownWriter(NotebookWriter):
         codeblock = ('\n{fence}{attributes}\n'
                      '{cell.input}\n'
                      '{fence}\n')
-        attrs = self.create_attributes(cell, input_cell=True)
+        attrs = self.create_attributes(cell, cell_type='input')
         return codeblock.format(attributes=attrs, fence='```', cell=cell)
 
     def create_output_block(self, cell):
         if self.strip_outputs:
             return ''
-        elif self.write_outputs:
-            return self.create_markdown_figure(cell)
         else:
             return self.create_output_codeblock(cell)
 
@@ -437,24 +438,18 @@ class MarkdownWriter(NotebookWriter):
                                 prompt_number=cell.prompt_number,
                                 contents=self.string2json(cell.outputs))
 
-    def create_markdown_figure(self, cell):
-        display_outputs = [output for output in cell.outputs
-                           if output.output_type == 'display_data']
-        # hack, not sure what else to do.
-        filename = display_outputs[0].png_filename
-        attrs = self.create_attributes(cell)
-        filepath = os.path.join(self.output_dir, filename)
-        return '\n![caption]({}){}\n'.format(filepath, attrs)
-
-    def create_attributes(self, cell, input_cell=False):
+    def create_attributes(self, cell, cell_type=None):
         """Turn the attribute dict into an attribute string
         for the code block.
         """
         if self.strip_outputs or not hasattr(cell, 'prompt_number'):
             return 'python'
 
-        elif input_cell:
+        elif cell_type == 'input':
             attrlist = ['.python', '.input', 'n={}'.format(cell.prompt_number)]
+
+        elif cell_type == 'output':
+            attrlist = ['.outputs', 'n={}'.format(cell.prompt_number)]
 
         else:
             attrlist = []
@@ -476,12 +471,43 @@ class MarkdownWriter(NotebookWriter):
                 attrlist.append('.' + cls)
 
         for k, v in attrs.items():
-            if k == 'n':
-                pass
+            if cell_type == 'output':
+                break
+            elif k == 'n':
+                continue
+            elif k == 'caption' and cell_type == 'figure':
+                continue
             else:
                 attrlist.append(k + '=' + v)
 
         return '{' + ' '.join(attrlist) + '}'
+
+    @staticmethod
+    def dequote(s):
+        """Remove excess quotes from a string."""
+        if len(s) < 2:
+            return s
+        elif (s[0] == s[-1]) and s.startswith(('"', "'")):
+            return s[1: -1]
+        else:
+            return s
+
+    @staticmethod
+    def data2uri(data, data_type):
+        """Convert base64 data into a data uri with the given data_type."""
+        MIME_MAP = {
+            'image/jpeg': 'jpeg',
+            'image/png': 'png',
+            'text/plain': 'text',
+            'text/html': 'html',
+            'text/latex': 'latex',
+            'application/javascript': 'html',
+            'image/svg+xml': 'svg',
+        }
+        inverse_map = {v: k for k, v in MIME_MAP.items()}
+        uri = r"data:{mime};base64,{data}"
+        return uri.format(mime=inverse_map[data_type],
+                          data=data.replace('\n', ''))
 
 
 class JSONReader(nbJSONReader):
