@@ -73,7 +73,7 @@ class MarkdownReader(NotebookReader):
     |\n[ \t]*)                 # or another blank line
     """
 
-    def __init__(self, code_regex=None, precode=[], magic=True,
+    def __init__(self, code_regex=None, precode='', magic=True,
                  attrs=None):
         """
             code_regex - Either 'fenced' or 'indented' or
@@ -84,9 +84,9 @@ class MarkdownReader(NotebookReader):
                          Default is to look for both indented and fenced
                          code blocks.
 
-            precode    - list of lines of code to put at the start of the
-                         document, e.g. ['%matplotlib inline',
-                                         'import numpy as np']
+            precode    - string, lines of code to put at the start of the
+                         document, e.g.
+                         '%matplotlib inline\nimport numpy as np'
 
             magic      - whether to use code cell language magic, e.g.
                          put '%bash' at start of cells that have language
@@ -119,14 +119,7 @@ class MarkdownReader(NotebookReader):
     @property
     def pre_code_block(self):
         """Code block to place at the start of the document."""
-        content = ''
-        for code in self.precode:
-            content += code + '\n'
-
-        # remove last newline
-        content = content[:-1]
-
-        return {'content': content,
+        return {'content': self.precode.strip('\n'),
                 'type': self.code,
                 'IO': 'input',
                 'attributes': ''}
@@ -780,7 +773,7 @@ def cli():
     readers = {'notebook': (JSONReader, [], {}),
                'markdown': (MarkdownReader,
                             [],
-                            {'precode': args.precode,
+                            {'precode': '\n'.join(args.precode),
                              'magic': args.magic})
                }
     writers = {'notebook': (JSONWriter, [args.strip_outputs], {}),
