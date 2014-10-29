@@ -7,9 +7,9 @@ from markdown and r-markdown.
 [ipython]: http://www.ipython.org/notebook
 [notedown]: http://github.com/aaren/notedown
 
-It is really simple and separates your markdown into code and not
-code. Code blocks (fenced or indented) go into input cells,
-everything else goes into markdown cells.
+`notedown` separates your markdown into code and not code. Code
+blocks (fenced or indented) go into input cells, everything else
+goes into markdown cells.
 
 Usage:
 
@@ -24,28 +24,20 @@ or the latest on github:
     pip install https://github.com/aaren/notedown/tarball/master
 
 
-### Why?
-
-*Save yourself* from the *indignity* of writing **text** in the browser!
-
-There might be more reasons, but that was the main one for me.
-
-
 ### Conversion to markdown
-
-Convert a notebook into markdown, with outputs intact:
-
-    notedown input.ipynb --from notebook --to markdown > output_with_outputs.md
 
 Convert a notebook into markdown, stripping all outputs:
 
-    notedown input.ipynb --from notebook --to markdown --strip > output.md
+    notedown input.ipynb --to markdown --strip > output.md
 
+Convert a notebook into markdown, with output JSON intact:
+
+    notedown input.ipynb --to markdown > output_with_outputs.md
 
 The outputs are placed as JSON in a code-block immediately after the
-corresponding input code-block. `notedown` understands this format
-as well, so it is possible to roundtrip notebooks through json and
-markdown formats.
+corresponding input code-block. `notedown` understands this
+convention as well, so it is possible to convert this
+markdown-with-json back into a notebook.
 
 This means it is possible to edit markdown, convert to notebook,
 play around a bit and convert back to markdown.
@@ -56,6 +48,7 @@ conversion.
 Strip the output cells from markdown:
 
     notedown with_output_cells.md --to markdown --strip > no_output_cells.md
+
 
 ### Running an IPython Notebook
 
@@ -72,6 +65,29 @@ executed notebook:
 
 [runipy]: https://github.com/paulgb/runipy
 
+
+### Rendering outputs in markdown
+
+This is experimental!
+
+Convert a notebook into markdown, rendering cell outputs as native
+markdown elements:
+
+    notedown input.ipynb --render
+
+This means that e.g. png outputs become `![](data-uri)` images and
+that text is placed in the document.
+
+Of course, you can use this in conjuntion with runipy to produce
+markdown-with-code-and-figures from markdown-with-code:
+
+    notedown input.md --run --render > output.md
+
+Not a notebook in sight!
+
+The `--render` flag forces the output format to markdown.
+
+
 ### Magic
 
 Fenced code blocks annotated with a language other than python are
@@ -83,6 +99,7 @@ You can disable this with `--nomagic`.
 
 - `--pre` lets you add arbitrary code to the start of the notebook.
   e.g. `notedown file.md --pre '%matplotlib inline' 'import numpy as np'`
+
 
 ### R-markdown
 
@@ -110,84 +127,25 @@ Convert r-markdown into an IPython notebook:
 
 Not right now, no. Notedown isn't very clever.
 
+
 ### This isn't very interactive!
 
-No, it isn't. Notedown takes markdown and turns it into an IPython
-notebook.
-
-You can set up a pseudo-interactive loop in Vim by calling
-
-```viml
-:!notedown % > out.ipynb
-```
-
-and viewing the result in the browser with
-
-```bash
-ipython notebook out.ipynb
-```
-
-You'll get far better interactivity by using [vim-ipython],
-which allows you to connect to a running ipython kernel. You can
-send code from vim to ipython and get code completion from the
-running kernel. Try it!
+You can get an interactive ipython session in vim by using
+[vim-ipython], which allows you to connect to a running ipython
+kernel. You can send code from vim to ipython and get code
+completion from the running kernel. Try it!
 
 [vim-ipython]: http://www.github.com/ivanov/vim-ipython
-
-Here are some mappings for your vimrc to make this pleasant:
-    
-```viml
-" Very useful mappings to be used with markdown and ipython
-" search and select contents of fenced code blocks using <leader>f
-nnoremap <leader>f /\v(\_^```python\n)@<=(\_.{-})(\n`{3}\_$)@=<CR>v//e<CR>
-" goto the start of the current fenced code block with [b
-" (see :help search)
-nnoremap [b :call search('\n```python', 'b')<CR>
-" select current code block with <leader>b
-" TODO: assumes <leader>==, use <leader>f instead of ,f
-" TODO: cancel search highlighting
-nmap <leader>b [b,f
-" (or could do [b0v/\n```)
-" send current code block to ipython with <leader>p
-nmap <leader>p ,b<C-s>
-```
 
 
 ### Where's my syntax highlighting?!
 
-You can syntax highlight python code contained in fenced code blocks
-with this command (put it in your vimrc):
+Try using either [vim-markdown] or [vim-pandoc]. Both are clever
+enough to highlight code in markdown.
 
-```viml
-function! HiPy ()
-    let b:current_syntax=''
-    unlet b:current_syntax
-    syntax include @py syntax/python.vim
-    " github flavoured markdown (code blocks fenced with ```)
-    syntax region gfmpythoncode keepend start="^```py.*$" end=/^\s*```$\n/ contains=@py
-endfunction
+[vim-markdown]: https://github.com/tpope/vim-markdown
+[vim-pandoc]: https://github.com/vim-pandoc/vim-pandoc
 
-" enable highlighting of fenced python code with <leader>h
-map <leader>h :call HiPy ()<CR>
-```
-
-BONUS! Of course you can do the same for latex display and inline maths:
-
-```viml
-syntax include syntax/tex.vim
-" display maths with $$ ... $$
-syn region texdisplaymaths start="\$\$" end="\$\$" skip="\\\$" contains=@texMathZoneGroup
-" inline maths with $ ... $
-" start is a $ not preceded by another $        - \(\$\)\@<!\$
-" and not preceded by a \ (concat)              - \(\$\)\@<!\&\(\\\)\@<!\$
-" and not followed by another $                 - \$\(\$\)\@!
-" ending in a $ not preceded by a \             - \((\$\)\@<!\$
-" skipping any \$                               - \\\$
-" see :help \@<! for more
-syn region texinlinemaths start="\(\$\)\@<!\&\(\\\)\@<!\$\(\$\)\@!" end="\(\$\)\@<!\$" skip="\\\$" contains=@texMathZoneGroup
-" restriction is that you can't have something like \$$maths$ - there
-" has to be a space after all of the \$ (literal $)
-```
 
 ### TODO
 
