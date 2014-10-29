@@ -78,8 +78,8 @@ the rmagic extension to execute the code blocks:
 """
 
 
-def cli():
-    """Execute for command line usage."""
+def cli_parser():
+    """Create parser for command line usage."""
     description = "Create an IPython notebook from markdown."
     example_use = "Example:  notedown some_markdown.md > new_notebook.ipynb"
     parser = argparse.ArgumentParser(description=description,
@@ -87,12 +87,10 @@ def cli():
     parser.add_argument('input_file',
                         help="markdown input file (default STDIN)",
                         nargs="?",
-                        type=argparse.FileType('r'),
-                        default=sys.stdin)
+                        default='-')
     parser.add_argument('--output',
                         help="output file, (default STDOUT)",
-                        type=argparse.FileType('w'),
-                        default=sys.stdout)
+                        default='-')
     parser.add_argument('--from',
                         dest='informat',
                         choices=('notebook', 'markdown'),
@@ -143,6 +141,11 @@ def cli():
     parser.add_argument('--template',
                         help=('template file'))
 
+    return parser
+
+
+def cli():
+    parser = cli_parser()
     args = parser.parse_args()
 
     if args.examples:
@@ -150,16 +153,23 @@ def cli():
         exit()
 
     # if no stdin and no input file
-    if args.input_file.isatty():
+    if args.input_file == '-' and sys.stdin.isatty():
         parser.print_help()
         exit()
+
+    elif args.input_file == '-':
+        input_file = sys.stdin
+
+    elif args.input_file != '-':
+        input_file = open(args.input_file, 'r')
+
+    else:
+        exit('malformed input')
 
     # pre-process markdown by using knitr on it
     if args.knit:
         knitr = Knitr()
-        input_file = knitr.knit(args.input_file, opts_chunk=args.knit)
-    else:
-        input_file = args.input_file
+        input_file = knitr.knit(input_file, opts_chunk=args.knit)
 
     if args.rmagic:
         args.precode.append(r"%load_ext rmagic")
@@ -189,19 +199,26 @@ def cli():
         args.informat = 'notebook'
         args.outformat = 'markdown'
 
-    informat = args.informat or ftdetect(args.input_file.name) or 'markdown'
-    outformat = args.outformat or ftdetect(args.output.name) or 'notebook'
+    informat = args.informat or ftdetect(input_file.name) or 'markdown'
+    outformat = args.outformat or ftdetect(args.output) or 'notebook'
 
     Reader, rargs, rkwargs = readers[informat]
     Writer, wargs, wkwargs = writers[outformat]
     reader = Reader(*rargs, **rkwargs)
     writer = Writer(*wargs, **wkwargs)
 
-    with input_file as ip, args.output as op:
+    with input_file as ip:
         notebook = reader.read(ip)
-        if args.run:
-            run(notebook)
-        writer.write(notebook, op)
+
+    if args.run:
+        run(notebook)
+
+    if args.output == '-':
+        writer.write(notebook, sys.stdout)
+
+    elif args.output != '-':
+        with open(args.output, 'w') as op:
+            writer.write(notebook, op)
 
 
 def ftdetect(filename):
