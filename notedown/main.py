@@ -100,7 +100,8 @@ def cli_parser():
                         dest='outformat',
                         choices=('notebook', 'markdown'),
                         help=("format to convert to, defaults to notebook "
-                              "or file extension"))
+                              "or file extension. Setting --render forces "
+                              "this to 'markdown'"))
     parser.add_argument('--reverse',
                         action='store_true',
                         help=("alias for --from notebook --to markdown"))
@@ -136,7 +137,7 @@ def cli_parser():
                         help=('show example usage'),
                         action='store_true')
     parser.add_argument('--render',
-                        help=('render outputs'),
+                        help=('render outputs, forcing markdown output'),
                         action='store_true')
     parser.add_argument('--template',
                         help=('template file'))
@@ -201,6 +202,9 @@ def cli():
 
     informat = args.informat or ftdetect(input_file.name) or 'markdown'
     outformat = args.outformat or ftdetect(args.output) or 'notebook'
+
+    if args.render:
+        outformat = 'markdown'
 
     Reader, rargs, rkwargs = readers[informat]
     Writer, wargs, wkwargs = writers[outformat]
