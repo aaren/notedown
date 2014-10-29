@@ -41,15 +41,21 @@ unknown type  {{ cell.type }}
 {%- endmacro %}
 
 {% block data_svg %}
-![{{ caption(cell) }}]({{ output.svg | data2uri(data_type='svg') }}){{ cell | create_attributes('figure') }}
+<div {{ cell | create_attributes('figure') }}>
+![{{ caption(cell) }}]({{ output.svg | data2uri(data_type='svg') }})
+</div>
 {% endblock data_svg %}
 
 {% block data_png %}
-![{{ caption(cell) }}]({{ output.png | data2uri(data_type='png') }}){{ cell | create_attributes('figure') }}
+<div {{ cell | create_attributes('figure') }}>
+![{{ caption(cell) }}]({{ output.png | data2uri(data_type='png') }})
+</div>
 {% endblock data_png %}
 
 {% block data_jpg %}
-![{{ caption(cell) }}]({{ output.jpeg | data2uri(data_type='jpeg') }}){{ cell | create_attributes('figure') }}
+<div {{ cell | create_attributes('figure') }}>
+![{{ caption(cell) }}]({{ output.jpeg | data2uri(data_type='jpeg') }})
+</div>
 {% endblock data_jpg %}
 
 {% block data_latex %}

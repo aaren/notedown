@@ -460,11 +460,13 @@ class MarkdownWriter(NotebookWriter):
             kvs = [('n', '{}'.format(cell.prompt_number))]
 
         elif cell_type == 'figure':
-            # TODO: arguably, these shouldn't even be in the attributes
+            # TODO: these shouldn't even be in the attributes
             attr.classes.remove('python')
             attr.classes.remove('input')
-            classes = []
-            kvs = []
+            #
+            attr.classes.append('figure')
+            attr.classes.append('output')
+            return attr.to_html()
 
         for cls in classes:
             if cls in attr.classes:
