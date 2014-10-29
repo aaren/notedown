@@ -242,9 +242,8 @@ class MarkdownReader(NotebookReader):
             regex = r"""\{(?P<language>r)[ ]*(?P<options>.*)\}"""
 
         elif regex == 'pandoc':
-            parser = PandocAttributeParser()
-            attr_dict = parser.parse(attributes.strip('{}'))
-            return attr_dict
+            attr = PandocAttributes(attributes, 'markdown')
+            return attr.to_dict()
 
         pattern = re.compile(regex, self.re_flags)
         return pattern.match(attributes).groupdict()
@@ -445,42 +444,41 @@ class MarkdownWriter(NotebookWriter):
         if self.strip_outputs or not hasattr(cell, 'prompt_number'):
             return 'python'
 
-        elif cell_type == 'input':
-            attrlist = ['.python', '.input', 'n={}'.format(cell.prompt_number)]
-
-        elif cell_type == 'output':
-            attrlist = ['.outputs', 'n={}'.format(cell.prompt_number)]
-
-        else:
-            attrlist = []
-
         try:
             attrs = cell.metadata['attributes'].copy()
         except KeyError:
             attrs = {'id': '', 'classes': []}
 
-        id = attrs.pop('id')
-        if id:
-            attrlist.append('#' + id)
+        attr = PandocAttributes(attrs, 'dict')
 
-        classes = attrs.pop('classes')
+        if cell_type == 'input':
+            classes = ['python', 'input']
+            kvs = [('n', '{}'.format(cell.prompt_number))]
+
+        elif cell_type == 'outputs':
+            classes = ['outputs']
+            kvs = [('n', '{}'.format(cell.prompt_number))]
+
+        elif cell_type == 'figure':
+            # TODO: arguably, these shouldn't even be in the attributes
+            attr.classes.remove('python')
+            attr.classes.remove('input')
+            classes = []
+            kvs = []
+
         for cls in classes:
-            if cls in ('python', 'input'):
-                pass
-            else:
-                attrlist.append('.' + cls)
-
-        for k, v in attrs.items():
-            if cell_type == 'output':
-                break
-            elif k == 'n':
-                continue
-            elif k == 'caption' and cell_type == 'figure':
+            if cls in attr.classes:
                 continue
             else:
-                attrlist.append(k + '=' + v)
+                attr.classes.append(cls)
 
-        return '{' + ' '.join(attrlist) + '}'
+        for kv in kvs:
+            if kv in attr.kvs:
+                continue
+            else:
+                attr.kvs.append(kv)
+
+        return attr.to_markdown()
 
     @staticmethod
     def dequote(s):
@@ -559,7 +557,7 @@ class CodeMagician(object):
         return code_magic + block['content']
 
 
-class PandocAttributeParser(object):
+class PandocAttributes(object):
     """Parser for pandoc block attributes.
 
     usage:
@@ -569,40 +567,109 @@ class PandocAttributeParser(object):
         >>> {'id': 'id', 'classes': ['class1', 'class2'], 'key'='value'}
     """
     spnl = ' \n'
+    split_regex = r'''((?:[^{separator}"']|"[^"]*"|'[^']*')+)'''.format
 
-    @staticmethod
-    def isid(string):
-        return string.startswith('#')
+    def __init__(self, attr, format='pandoc'):
+        if format == 'pandoc':
+            id, classes, kvs = attr
+        elif format == 'markdown':
+            id, classes, kvs = self.parse_markdown(attr)
+        elif format == 'html':
+            id, classes, kvs = self.parse_html(attr)
+        elif format == 'dict':
+            id, classes, kvs = self.parse_dict(attr)
+        else:
+            raise UserWarning('invalid format')
 
-    @staticmethod
-    def isclass(string):
-        return string.startswith('.')
-
-    @staticmethod
-    def iskv(string):
-        return ('=' in string)
-
-    @staticmethod
-    def isspecial(string):
-        return '-' == string
+        self.id = id
+        self.classes = classes
+        self.kvs = kvs
 
     @classmethod
-    def parse(self, attr_string):
+    def parse_markdown(self, attr_string):
+        """Read markdown to pandoc attributes."""
         attr_string = attr_string.strip('{}')
-        split_regex = r'''((?:[^{separator}"']|"[^"]*"|'[^']*')+)'''.format
-        splitter = re.compile(split_regex(separator=self.spnl))
+        splitter = re.compile(self.split_regex(separator=self.spnl))
         attrs = splitter.split(attr_string)[1::2]
 
-        id = [a[1:] for a in attrs if self.isid(a)]
-        classes = [a[1:] for a in attrs if self.isclass(a)]
-        kvs = [a.split('=', 1) for a in attrs if self.iskv(a)]
-        special = ['unnumbered' for a in attrs if self.isspecial(a)]
+        try:
+            id = [a[1:] for a in attrs if a.startswith('#')][0]
+        except IndexError:
+            id = ''
 
-        attr_dict = {k: v for k, v in kvs}
-        attr_dict['id'] = id[0] if id else ""
-        attr_dict['classes'] = classes + special
+        classes = [a[1:] for a in attrs if a.startswith('.')]
+        kvs = [a.split('=', 1) for a in attrs if '=' in a]
+        special = ['unnumbered' for a in attrs if a == '-']
+        classes.extend(special)
 
-        return attr_dict
+        return id, classes, kvs
+
+    def parse_html(self, attr_string):
+        """Read a html string to pandoc attributes."""
+        splitter = re.compile(self.split_regex(separator=self.spnl))
+        attrs = splitter.split(attr_string)[1::2]
+
+        idre = re.compile(r'''id=["']?([\w ]*)['"]?''')
+        clsre = re.compile(r'''class=["']?([\w ]*)['"]?''')
+
+        id_matches = [idre.search(a) for a in attrs]
+        cls_matches = [clsre.search(a) for a in attrs]
+
+        try:
+            id = [m.groups()[0] for m in id_matches if m][0]
+        except IndexError:
+            id = ''
+
+        classes = [m.groups()[0] for m in cls_matches if m][0].split()
+
+        kvs = [a.split('=', 1) for a in attrs if '=' in a]
+        kvs = [(k, v) for k, v in kvs if k not in ('id', 'class')]
+
+        special = ['unnumbered' for a in attrs if '-' in a]
+        classes.extend(special)
+
+        return id, classes, kvs
+
+    @classmethod
+    def parse_dict(self, attrs):
+        """Read a dict to pandoc attributes."""
+        attrs = attrs or {}
+        ident = attrs.get("id", "")
+        classes = attrs.get("classes", [])
+        keyvals = [[x, attrs[x]] for x in attrs if (x != "classes" and x != "id")]
+        return [ident, classes, keyvals]
+
+    def to_markdown(self):
+        """Returns attributes formatted as markdown."""
+        attrlist = []
+
+        if self.id:
+            attrlist.append('#' + self.id)
+
+        for cls in self.classes:
+            attrlist.append('.' + cls)
+
+        for k, v in self.kvs:
+            attrlist.append(k + '=' + v)
+
+        return '{' + ' '.join(attrlist) + '}'
+
+    def to_html(self):
+        """Returns attributes formatted as html."""
+        id, classes, kvs = self.id, self.classes, self.kvs
+        id_str = 'id="{}"'.format(id) if id else ''
+        class_str = 'class="{}"'.format(' '.join(classes)) if classes else ''
+        key_str = ' '.join('{}={}'.format(k, v) for k, v in kvs)
+        return ' '.join((id_str, class_str, key_str)).strip()
+
+    def to_dict(self):
+        """Returns attributes formatted as a dictionary."""
+        d = {'id': self.id, 'classes': self.classes}
+        d.update(self.kvs)
+        return d
+
+    def to_pandoc(self):
+        return [self.id, self.classes, self.kvs]
 
 
 class Knitr(object):
