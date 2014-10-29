@@ -464,6 +464,7 @@ class MarkdownWriter(NotebookWriter):
             attr.classes.remove('python')
             attr.classes.remove('input')
             #
+            attr.kvs = [(k, v) for k, v in attr.kvs if k != 'caption']
             attr.classes.append('figure')
             attr.classes.append('output')
             return attr.to_html()
