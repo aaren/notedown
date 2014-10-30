@@ -102,9 +102,6 @@ def cli_parser():
                         help=("format to convert to, defaults to notebook "
                               "or file extension. Setting --render forces "
                               "this to 'markdown'"))
-    parser.add_argument('--reverse',
-                        action='store_true',
-                        help=("alias for --from notebook --to markdown"))
     parser.add_argument('--run',
                         action='store_true',
                         help=("run the notebook using runipy"))
@@ -195,10 +192,6 @@ def cli():
                             [template_file],
                             {'strip_outputs': args.strip_outputs})
                }
-
-    if args.reverse:
-        args.informat = 'notebook'
-        args.outformat = 'markdown'
 
     informat = args.informat or ftdetect(input_file.name) or 'markdown'
     outformat = args.outformat or ftdetect(args.output) or 'notebook'
