@@ -139,6 +139,7 @@ class MarkdownReader(NotebookReader):
 
                 if block['attributes'] and self.attrs == 'pandoc':
                     code_cell.metadata = nbbase.NotebookNode({'attributes': block['attributes']})
+                    code_cell.prompt_number = block['attributes'].get('n')
 
                 cells.append(code_cell)
 
@@ -475,11 +476,11 @@ class MarkdownWriter(NotebookWriter):
             else:
                 attr.classes.append(cls)
 
-        for kv in kvs:
-            if kv in attr.kvs:
+        for k, v in kvs:
+            if k in zip(*attr.kvs)[0]:
                 continue
             else:
-                attr.kvs.append(kv)
+                attr.kvs.append((k, v))
 
         return attr.to_markdown()
 
