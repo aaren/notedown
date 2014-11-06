@@ -156,23 +156,25 @@ class MarkdownReader(NotebookReader):
         except KeyError:
             language = None
 
-        block['language'] = language
-
-        block['attributes'] = attr
-
         # ensure one identifier for python code
-        if block['language'] in ('python', 'py', '', None):
+        if language in ('python', 'py', '', None):
             block['language'] = self.python
         # add alternate language execution magic
-        elif block['language'] != self.python and self.magic:
-            block['content'] = CodeMagician()(block)
+        elif language != self.python and self.magic:
+            block['content'] = CodeMagician.magic(language) + block['content']
+            block['language'] = language
 
         # set input / output status of cell
         if 'output' in attr.classes and 'json' in attr.classes:
             block['IO'] = 'output'
+        elif 'input' in attr.classes:
+            block['IO'] = 'input'
+            attr.classes.remove('input')
         else:
             block['IO'] = 'input'
         # TODO: would like some way to pass code as markdown
+
+        block['attributes'] = attr
 
     @staticmethod
     def pre_process_text_block(block):
@@ -414,11 +416,7 @@ class MarkdownWriter(NotebookWriter):
         if self.strip_outputs or not hasattr(cell, 'prompt_number'):
             return 'python'
 
-        try:
-            attrs = cell.metadata['attributes'].copy()
-        except KeyError:
-            attrs = {'id': '', 'classes': []}
-
+        attrs = cell.metadata.get('attributes')
         attr = PandocAttributes(attrs, 'dict')
 
         if cell_type == 'input':
@@ -430,10 +428,6 @@ class MarkdownWriter(NotebookWriter):
             kvs = [('n', '{}'.format(cell.prompt_number))]
 
         elif cell_type == 'figure':
-            # TODO: these shouldn't even be in the attributes
-            attr.classes.remove('python')
-            attr.classes.remove('input')
-            #
             attr.kvs.pop('caption', '')
             attr.classes.append('figure')
             attr.classes.append('output')
@@ -515,6 +509,7 @@ class CodeMagician(object):
         for key in k:
             aliases[key] = v
 
+    @classmethod
     def magic(self, alias):
         """Returns the appropriate IPython code magic when
         called with an alias for a language.
@@ -523,11 +518,6 @@ class CodeMagician(object):
             return self.aliases[alias]
         else:
             return "%%{}\n".format(alias)
-
-    def __call__(self, block):
-        """Return the block with the magic prepended to the content."""
-        code_magic = self.magic(block['language'])
-        return code_magic + block['content']
 
 
 class Knitr(object):
