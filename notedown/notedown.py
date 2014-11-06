@@ -133,8 +133,17 @@ class MarkdownReader(NotebookReader):
             # TODO: if first block is markdown, place after?
             all_blocks.insert(0, self.pre_code_block)
 
+        cells = self.create_cells(all_blocks)
+
+        ws = nbbase.new_worksheet(cells=cells)
+        nb = nbbase.new_notebook(worksheets=[ws])
+
+        return nb
+
+    def create_cells(self, blocks):
+        """Turn the list of blocks into a list of notebook cells."""
         cells = []
-        for block in all_blocks:
+        for block in blocks:
             if (block['type'] == self.code) and (block['IO'] == 'input'):
                 kwargs = {'input': block['content']}
                 code_cell = nbbase.new_code_cell(**kwargs)
@@ -145,8 +154,7 @@ class MarkdownReader(NotebookReader):
 
                 cells.append(code_cell)
 
-            elif (block['type'] == self.code
-                  and block['IO'] == 'output'
+            elif (block['type'] == self.code and block['IO'] == 'output'
                   and cells[-1].cell_type == 'code'):
                 cells[-1].outputs = [nbbase.NotebookNode(output)
                                      for output in json.loads(block['content'])]
@@ -163,10 +171,7 @@ class MarkdownReader(NotebookReader):
                 raise NotImplementedError("{} is not supported as a cell"
                                           "type".format(block['type']))
 
-        ws = nbbase.new_worksheet(cells=cells)
-        nb = nbbase.new_notebook(worksheets=[ws])
-
-        return nb
+        return cells
 
     def parse_blocks(self, text):
         """Extract the code and non-code blocks from given markdown text.
