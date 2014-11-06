@@ -132,59 +132,65 @@ class MarkdownReader(NotebookReader):
         return self.new_code_block(content=self.precode.strip('\n'),
                                    IO='input')
 
-    def reads(self, s, **kwargs):
-        """Read string s to notebook. Returns a notebook."""
-        return self.to_notebook(s, **kwargs)
+    def pre_process_code_block(self, block):
+        """Preprocess the content of a code block, modifying the code
+        block in place.
 
-    def to_notebook(self, s, **kwargs):
-        """Convert the markdown string s to an IPython notebook.
+        Remove indentation and do magic with the cell language
+        if applicable.
 
-        Returns a notebook.
+        If nothing else, we need to deal with the 'content', 'icontent'
+        difference.
         """
-        all_blocks = self.parse_blocks(s)
-        if self.pre_code_block['content']:
-            # TODO: if first block is markdown, place after?
-            all_blocks.insert(0, self.pre_code_block)
+        # dedent indented code blocks
+        if 'indent' in block and block['indent']:
+            indent = r'^' + block['indent']
+            block['content'] = re.sub(indent, '', block['icontent'],
+                                      flags=re.MULTILINE)
 
-        cells = self.create_cells(all_blocks)
+        # extract attributes from fenced code blocks
+        attr = PandocAttributes(block['attributes'], 'markdown')
+        try:
+            language = set(attr.classes).intersection(languages).pop()
+            attr.classes.remove(language)
+        except KeyError:
+            language = None
 
-        ws = nbbase.new_worksheet(cells=cells)
-        nb = nbbase.new_notebook(worksheets=[ws])
+        block['language'] = language
 
-        return nb
+        block['attributes'] = attr
 
-    def create_cells(self, blocks):
-        """Turn the list of blocks into a list of notebook cells."""
-        cells = []
-        for block in blocks:
-            if (block['type'] == self.code) and (block['IO'] == 'input'):
-                kwargs = {'input': block['content']}
-                code_cell = nbbase.new_code_cell(**kwargs)
+        # ensure one identifier for python code
+        if block['language'] in ('python', 'py', '', None):
+            block['language'] = self.python
+        # add alternate language execution magic
+        elif block['language'] != self.python and self.magic:
+            block['content'] = CodeMagician()(block)
 
-                if block['attributes'] and self.attrs == 'pandoc':
-                    code_cell.metadata = nbbase.NotebookNode({'attributes': block['attributes']})
-                    code_cell.prompt_number = block['attributes'].get('n')
+        # set input / output status of cell
+        if 'output' in attr.classes and 'json' in attr.classes:
+            block['IO'] = 'output'
+        else:
+            block['IO'] = 'input'
+        # TODO: would like some way to pass code as markdown
 
-                cells.append(code_cell)
+    @staticmethod
+    def pre_process_text_block(block):
+        """Apply pre processing to text blocks.
 
-            elif (block['type'] == self.code and block['IO'] == 'output'
-                  and cells[-1].cell_type == 'code'):
-                cells[-1].outputs = [nbbase.NotebookNode(output)
-                                     for output in json.loads(block['content'])]
-                cells[-1].prompt_number = block['attributes']['n']
-
-            elif block['type'] == self.markdown:
-                kwargs = {'cell_type': block['type'],
-                          'source': block['content']}
-
-                markdown_cell = nbbase.new_text_cell(**kwargs)
-                cells.append(markdown_cell)
-
-            else:
-                raise NotImplementedError("{} is not supported as a cell"
-                                          "type".format(block['type']))
-
-        return cells
+        Currently just strips a single blank line from the beginning
+        and end of the block.
+        """
+        block['content'] = re.sub(r"""(?mx)
+                                  (
+                                  (?:\A[ \t]*\n)
+                                  |
+                                  (?:\n^[ \t]*\n\Z)
+                                  |
+                                  (?:\n\Z)
+                                  )""",
+                                  '',
+                                  block['content'])
 
     def parse_blocks(self, text):
         """Extract the code and non-code blocks from given markdown text.
@@ -240,112 +246,60 @@ class MarkdownReader(NotebookReader):
 
         return all_blocks
 
-    def parse_attributes(self, attributes, regex=None):
-        """Convert the content of attributes of fenced code blocks
-        into a dictionary.
-        """
-        if not regex:
-            regex = r"""(?P<language>   # group 'language',
-                        [\w+-]*)        # a word of alphanumerics, _, - or +
-                        [ ]*            # followed by spaces
-                        (?P<options>.*) # followed any text -> group 'options'
-                        """
-        elif regex == 'rmd':
-            # R-markdown should really be parsed by knitr and
-            # converted to normal markdown, in order to deal with
-            # chunk options properly. For simple rmd we can do it
-            # in notedown, we just don't get any options.
+    def create_cells(self, blocks):
+        """Turn the list of blocks into a list of notebook cells."""
+        cells = []
+        for block in blocks:
+            if (block['type'] == self.code) and (block['IO'] == 'input'):
+                kwargs = {'input': block['content']}
+                code_cell = nbbase.new_code_cell(**kwargs)
 
-            # r-markdown
-            # format: {r option, a=1, b=2}
-            regex = r"""\{(?P<language>r)[ ]*(?P<options>.*)\}"""
+                attr = block['attributes']
+                if not attr.is_empty:
+                    code_cell.metadata = nbbase.NotebookNode({'attributes': attr.to_dict()})
+                    code_cell.prompt_number = attr.kvs.get('n')
 
-        elif regex == 'pandoc':
-            attr = PandocAttributes(attributes, 'markdown')
-            return attr.to_dict()
+                cells.append(code_cell)
 
-        pattern = re.compile(regex, self.re_flags)
-        return pattern.match(attributes).groupdict()
+            elif (block['type'] == self.code and block['IO'] == 'output'
+                  and cells[-1].cell_type == 'code'):
+                cells[-1].outputs = [nbbase.NotebookNode(output)
+                                     for output in json.loads(block['content'])]
+                cells[-1].prompt_number = block['attributes']['n']
 
-    def pre_process_code_block(self, block):
-        """Preprocess the content of a code block, modifying the code
-        block in place.
+            elif block['type'] == self.markdown:
+                kwargs = {'cell_type': block['type'],
+                          'source': block['content']}
 
-        Remove indentation and do magic with the cell language
-        if applicable.
+                markdown_cell = nbbase.new_text_cell(**kwargs)
+                cells.append(markdown_cell)
 
-        If nothing else, we need to deal with the 'content', 'icontent'
-        difference.
-        """
-        # dedent indented code blocks
-        if 'indent' in block and block['indent']:
-            indent = r'^' + block['indent']
-            block['content'] = re.sub(indent, '', block['icontent'],
-                                      flags=re.MULTILINE)
-
-        # extract attributes from fenced code blocks
-        if 'attributes' in block and block['attributes']:
-            attr_string = block['attributes']
-            # try and be clever to select correct parser
-            if self.attrs:
-                attributes = self.parse_attributes(block['attributes'],
-                                                   self.attrs)
-
-            elif attr_string.startswith('{') and attr_string.endswith('}'):
-                attributes = self.parse_attributes(block['attributes'],
-                                                   'pandoc')
-                self.attrs = 'pandoc'
-                try:
-                    classes = set(attributes['classes'])
-                    block['language'] = classes.intersection(languages).pop()
-                except KeyError:
-                    block['language'] = ''
             else:
-                attributes = self.parse_attributes(block['attributes'])
-                block['language'] = attributes['language']
+                raise NotImplementedError("{} is not supported as a cell"
+                                          "type".format(block['type']))
 
-            block['attributes'] = attributes
+        return cells
 
-        else:
-            block['language'] = ''
+    def reads(self, s, **kwargs):
+        """Read string s to notebook. Returns a notebook."""
+        return self.to_notebook(s, **kwargs)
 
-        if 'language' in block:
-            # ensure one identifier for python code
-            if block['language'] in ('python', 'py', '', None):
-                block['language'] = self.python
-            # add alternate language execution magic
-            if block['language'] != self.python and self.magic:
-                block['content'] = CodeMagician()(block)
+    def to_notebook(self, s, **kwargs):
+        """Convert the markdown string s to an IPython notebook.
 
-        # set input / output status of cell (only with pandoc attrs)
-        if self.attrs == 'pandoc':
-            classes = block['attributes']['classes']
-            if 'output' in classes and 'json' in classes:
-                block['IO'] = 'output'
-            else:
-                block['IO'] = 'input'
-
-        # TODO: would like some way to pass code as markdown
-        else:
-            block['IO'] = 'input'
-
-    @staticmethod
-    def pre_process_text_block(block):
-        """Apply pre processing to text blocks.
-
-        Currently just strips a single blank line from the beginning
-        and end of the block.
+        Returns a notebook.
         """
-        block['content'] = re.sub(r"""(?mx)
-                                  (
-                                  (?:\A[ \t]*\n)
-                                  |
-                                  (?:\n^[ \t]*\n\Z)
-                                  |
-                                  (?:\n\Z)
-                                  )""",
-                                  '',
-                                  block['content'])
+        all_blocks = self.parse_blocks(s)
+        if self.pre_code_block['content']:
+            # TODO: if first block is markdown, place after?
+            all_blocks.insert(0, self.pre_code_block)
+
+        cells = self.create_cells(all_blocks)
+
+        ws = nbbase.new_worksheet(cells=cells)
+        nb = nbbase.new_notebook(worksheets=[ws])
+
+        return nb
 
 
 class MarkdownWriter(NotebookWriter):
