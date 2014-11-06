@@ -68,8 +68,7 @@ class MarkdownReader(NotebookReader):
     |\n[ \t]*)                 # or another blank line
     """
 
-    def __init__(self, code_regex=None, precode='', magic=True,
-                 attrs=None):
+    def __init__(self, code_regex=None, precode='', magic=True):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -86,11 +85,6 @@ class MarkdownReader(NotebookReader):
             magic      - whether to use code cell language magic, e.g.
                          put '%bash' at start of cells that have language
                          'bash'
-
-            rmagic     - whether to place '%load_ext rmagic' at the start
-                         of the notebook.
-
-            attrs      - attribute type of code blocks e.g. 'pandoc'
         """
         if not code_regex:
             self.code_regex = r"({}|{})".format(self.fenced_regex,
@@ -108,8 +102,6 @@ class MarkdownReader(NotebookReader):
 
         self.precode = precode
         self.magic = magic
-
-        self.attrs = attrs
 
     def new_code_block(self, **kwargs):
         """Create a new code block."""
