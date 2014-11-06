@@ -155,6 +155,7 @@ class MarkdownReader(NotebookReader):
                                   block['content'])
 
     def process_code_block(self, block):
+        """Parse attributes and do code magic."""
         attr = PandocAttributes(block['attributes'], 'markdown')
         try:
             language = set(attr.classes).intersection(languages).pop()
@@ -236,32 +237,49 @@ class MarkdownReader(NotebookReader):
 
         return all_blocks
 
+    @staticmethod
+    def create_code_cell(block):
+        """Create a notebook code cell from a block."""
+        code_cell = nbbase.new_code_cell(input=block['content'])
+
+        attr = block['attributes']
+        if not attr.is_empty:
+            code_cell.metadata \
+                = nbbase.NotebookNode({'attributes': attr.to_dict()})
+            code_cell.prompt_number = attr.kvs.get('n')
+
+        return code_cell
+
+    @staticmethod
+    def create_markdown_cell(block):
+        """Create a markdown cell from a block."""
+        kwargs = {'cell_type': block['type'],
+                  'source': block['content']}
+        markdown_cell = nbbase.new_text_cell(**kwargs)
+        return markdown_cell
+
+    @staticmethod
+    def create_outputs(block):
+        """Create a set of outputs from the contents of a json code
+        block.
+        """
+        return [nbbase.NotebookNode(output)
+                for output in json.loads(block['content'])]
+
     def create_cells(self, blocks):
         """Turn the list of blocks into a list of notebook cells."""
         cells = []
         for block in blocks:
             if (block['type'] == self.code) and (block['IO'] == 'input'):
-                kwargs = {'input': block['content']}
-                code_cell = nbbase.new_code_cell(**kwargs)
-
-                attr = block['attributes']
-                if not attr.is_empty:
-                    code_cell.metadata = nbbase.NotebookNode({'attributes': attr.to_dict()})
-                    code_cell.prompt_number = attr.kvs.get('n')
-
+                code_cell = self.create_code_cell(block)
                 cells.append(code_cell)
 
             elif (block['type'] == self.code and block['IO'] == 'output'
                   and cells[-1].cell_type == 'code'):
-                cells[-1].outputs = [nbbase.NotebookNode(output)
-                                     for output in json.loads(block['content'])]
-                cells[-1].prompt_number = block['attributes']['n']
+                cells[-1].outputs = self.create_outputs(block)
 
             elif block['type'] == self.markdown:
-                kwargs = {'cell_type': block['type'],
-                          'source': block['content']}
-
-                markdown_cell = nbbase.new_text_cell(**kwargs)
+                markdown_cell = self.create_markdown_cell(block)
                 cells.append(markdown_cell)
 
             else:
