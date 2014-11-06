@@ -111,13 +111,26 @@ class MarkdownReader(NotebookReader):
 
         self.attrs = attrs
 
+    def new_code_block(self, **kwargs):
+        """Create a new code block."""
+        proto = {'content': '',
+                 'type': self.code,
+                 'IO': '',
+                 'attributes': ''}
+        proto.update(**kwargs)
+        return proto
+
+    def new_text_block(self, **kwargs):
+        """Create a new text block."""
+        proto = {'content': '', 'type': self.markdown}
+        proto.update(**kwargs)
+        return proto
+
     @property
     def pre_code_block(self):
         """Code block to place at the start of the document."""
-        return {'content': self.precode.strip('\n'),
-                'type': self.code,
-                'IO': 'input',
-                'attributes': ''}
+        return self.new_code_block(content=self.precode.strip('\n'),
+                                   IO='input')
 
     def reads(self, s, **kwargs):
         """Read string s to notebook. Returns a notebook."""
@@ -196,12 +209,10 @@ class MarkdownReader(NotebookReader):
         text_limits = zip(text_starts, text_stops)
 
         # list of the groups from the code blocks
-        code_blocks = [m.groupdict() for m in code_matches]
-        # update with a type field
-        code_blocks = [dict(d.items() + [('type', self.code)])
-                       for d in code_blocks]
+        code_blocks = [self.new_code_block(**m.groupdict())
+                       for m in code_matches]
 
-        text_blocks = [{'content': text[i:j], 'type': self.markdown}
+        text_blocks = [self.new_text_block(content=text[i:j])
                        for i, j in text_limits]
 
         # remove indents, add code magic, etc.
@@ -309,15 +320,12 @@ class MarkdownReader(NotebookReader):
         # set input / output status of cell (only with pandoc attrs)
         if self.attrs == 'pandoc':
             classes = block['attributes']['classes']
-            if 'input' in classes:
-                block['IO'] = 'input'
-            elif 'output' and 'json' in classes:
+            if 'output' in classes and 'json' in classes:
                 block['IO'] = 'output'
             else:
-                block['type'] = self.markdown
-                block['content'] = block['fence'] + '\n' + block['content'] \
-                                    + '\n' + block['fence']
+                block['IO'] = 'input'
 
+        # TODO: would like some way to pass code as markdown
         else:
             block['IO'] = 'input'
 
