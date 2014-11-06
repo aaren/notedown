@@ -258,11 +258,15 @@ def test_parse_indented():
 def test_alt_lang():
     """Specifying a language that isn't python should generate
     code blocks using %%language magic."""
-    all_cells = parse_cells(alt_lang, 'fenced')
+    reader = notedown.MarkdownReader(code_regex='fenced')
 
-    code_cells = separate_code_cells(all_cells)
+    all_blocks = reader.parse_blocks(alt_lang)
 
-    assert(code_cells[0] == alt_lang_code)
+    code_blocks = [b for b in all_blocks if b['type'] == reader.code]
+    magic_block = code_blocks[0]
+    reader.process_code_block(magic_block)
+
+    assert(magic_block['content'] == alt_lang_code)
 
 
 def test_format_agnostic():

@@ -124,23 +124,37 @@ class MarkdownReader(NotebookReader):
         return self.new_code_block(content=self.precode.strip('\n'),
                                    IO='input')
 
-    def pre_process_code_block(self, block):
+    @staticmethod
+    def pre_process_code_block(block):
         """Preprocess the content of a code block, modifying the code
         block in place.
 
-        Remove indentation and do magic with the cell language
-        if applicable.
-
-        If nothing else, we need to deal with the 'content', 'icontent'
-        difference.
+        Just dedents indented code.
         """
-        # dedent indented code blocks
         if 'indent' in block and block['indent']:
             indent = r'^' + block['indent']
             block['content'] = re.sub(indent, '', block['icontent'],
                                       flags=re.MULTILINE)
 
-        # extract attributes from fenced code blocks
+    @staticmethod
+    def pre_process_text_block(block):
+        """Apply pre processing to text blocks.
+
+        Currently just strips a single blank line from the beginning
+        and end of the block.
+        """
+        block['content'] = re.sub(r"""(?mx)
+                                  (
+                                  (?:\A[ \t]*\n)
+                                  |
+                                  (?:\n^[ \t]*\n\Z)
+                                  |
+                                  (?:\n\Z)
+                                  )""",
+                                  '',
+                                  block['content'])
+
+    def process_code_block(self, block):
         attr = PandocAttributes(block['attributes'], 'markdown')
         try:
             language = set(attr.classes).intersection(languages).pop()
@@ -167,24 +181,6 @@ class MarkdownReader(NotebookReader):
         # TODO: would like some way to pass code as markdown
 
         block['attributes'] = attr
-
-    @staticmethod
-    def pre_process_text_block(block):
-        """Apply pre processing to text blocks.
-
-        Currently just strips a single blank line from the beginning
-        and end of the block.
-        """
-        block['content'] = re.sub(r"""(?mx)
-                                  (
-                                  (?:\A[ \t]*\n)
-                                  |
-                                  (?:\n^[ \t]*\n\Z)
-                                  |
-                                  (?:\n\Z)
-                                  )""",
-                                  '',
-                                  block['content'])
 
     def parse_blocks(self, text):
         """Extract the code and non-code blocks from given markdown text.
@@ -274,10 +270,6 @@ class MarkdownReader(NotebookReader):
 
         return cells
 
-    def reads(self, s, **kwargs):
-        """Read string s to notebook. Returns a notebook."""
-        return self.to_notebook(s, **kwargs)
-
     def to_notebook(self, s, **kwargs):
         """Convert the markdown string s to an IPython notebook.
 
@@ -288,12 +280,18 @@ class MarkdownReader(NotebookReader):
             # TODO: if first block is markdown, place after?
             all_blocks.insert(0, self.pre_code_block)
 
+        [self.process_code_block(b) for b in all_blocks if b['type'] == 'code']
+
         cells = self.create_cells(all_blocks)
 
         ws = nbbase.new_worksheet(cells=cells)
         nb = nbbase.new_notebook(worksheets=[ws])
 
         return nb
+
+    def reads(self, s, **kwargs):
+        """Read string s to notebook. Returns a notebook."""
+        return self.to_notebook(s, **kwargs)
 
 
 class MarkdownWriter(NotebookWriter):
