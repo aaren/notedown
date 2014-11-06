@@ -419,33 +419,27 @@ class MarkdownWriter(NotebookWriter):
         attrs = cell.metadata.get('attributes')
         attr = PandocAttributes(attrs, 'dict')
 
-        if cell_type == 'input':
-            classes = ['python', 'input']
-            kvs = [('n', '{}'.format(cell.prompt_number))]
+        if 'python' in attr.classes:
+            attr.classes.remove('python')
+        if 'input' in attr.classes:
+            attr.classes.remove('input')
 
-        elif cell_type == 'outputs':
-            classes = ['outputs']
-            kvs = [('n', '{}'.format(cell.prompt_number))]
-
-        elif cell_type == 'figure':
+        if cell_type == 'figure':
             attr.kvs.pop('caption', '')
             attr.classes.append('figure')
             attr.classes.append('output')
             return attr.to_html()
 
-        for cls in classes:
-            if cls in attr.classes:
-                continue
-            else:
-                attr.classes.append(cls)
+        elif cell_type == 'input':
+            # ensure python goes first so that github highlights it
+            attr.classes.insert(0, 'python')
+            attr.classes.insert(1, 'input')
+            if cell.prompt_number:
+                attr.kvs['n'] = cell.prompt_number
+            return attr.to_markdown(format='{classes} {id} {kvs}')
 
-        for k, v in kvs:
-            if k in attr.kvs:
-                continue
-            else:
-                attr.kvs[k] = v
-
-        return attr.to_markdown()
+        else:
+            return attr.to_markdown()
 
     @staticmethod
     def dequote(s):
