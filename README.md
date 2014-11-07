@@ -123,10 +123,23 @@ Convert r-markdown into an IPython notebook:
 [knitr]: yihui.name/knitr
 
 
-### I can't put a literal code block in my markdown!
+### How do I put a literal code block in my markdown?
 
-Not right now, no. Notedown isn't very clever.
+By using the `--match` argument. `notedown` defaults to converting
+*all* code-blocks into code-cells. This behaviour can be changed by
+giving a different argument to `--match`:
 
+- `--match=all`: convert all code blocks (the default)
+- `--match=fenced`: only convert fenced code blocks
+- `--match=language`: only convert fenced code blocks with
+  'language' as the syntax specifier.
+- `--match=strict`: only convert code blocks with Pandoc style
+  attributes containing 'python' and 'input' as classes. i.e. code
+  blocks must look like
+
+        ```{.python .input}
+        code
+        ```
 
 ### This isn't very interactive!
 

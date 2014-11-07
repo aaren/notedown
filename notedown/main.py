@@ -138,6 +138,12 @@ def cli_parser():
                         action='store_true')
     parser.add_argument('--template',
                         help=('template file'))
+    parser.add_argument('--match',
+                        default='all',
+                        help=("determine kind of code blocks that get "
+                              "converted into code cells. "
+                              "choose from 'all' (default), 'fenced', "
+                              "'strict' or a specific language to match on"))
 
     return parser
 
@@ -185,7 +191,8 @@ def cli():
                'markdown': (MarkdownReader,
                             [],
                             {'precode': '\n'.join(args.precode),
-                             'magic': args.magic})
+                             'magic': args.magic,
+                             'match': args.match})
                }
     writers = {'notebook': (JSONWriter, [args.strip_outputs], {}),
                'markdown': (MarkdownWriter,

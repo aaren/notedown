@@ -47,12 +47,13 @@ class MarkdownReader(NotebookReader):
 
     # fenced code
     fenced_regex = r"""
-    ^(?P<fence>`{3,}|~{3,}) # a line starting with a fence of 3 or more ` or ~
+    ^(?P<raw>
+    (?P<fence>`{3,}|~{3,})  # a line starting with a fence of 3 or more ` or ~
     (?P<attributes>.*)      # followed by the group 'attributes'
     \n                      # followed by a newline
     (?P<content>            # start a group 'content'
     [\s\S]*?)               # that includes anything
-    \n(?P=fence)$\n         # up until the same fence that we started with
+    \n(?P=fence)$\n)        # up until the same fence that we started with
     """
 
     # indented code
@@ -68,7 +69,7 @@ class MarkdownReader(NotebookReader):
     |\n[ \t]*)                 # or another blank line
     """
 
-    def __init__(self, code_regex=None, precode='', magic=True):
+    def __init__(self, code_regex=None, precode='', magic=True, match='all'):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -85,6 +86,9 @@ class MarkdownReader(NotebookReader):
             magic      - whether to use code cell language magic, e.g.
                          put '%bash' at start of cells that have language
                          'bash'
+
+            match      - one of 'all', 'fenced' or 'strict' or a specific
+                         language name
         """
         if not code_regex:
             self.code_regex = r"({}|{})".format(self.fenced_regex,
@@ -102,6 +106,8 @@ class MarkdownReader(NotebookReader):
 
         self.precode = precode
         self.magic = magic
+
+        self.match = match
 
     def new_code_block(self, **kwargs):
         """Create a new code block."""
@@ -155,21 +161,31 @@ class MarkdownReader(NotebookReader):
                                   block['content'])
 
     def process_code_block(self, block):
-        """Parse attributes and do code magic."""
+        """Parse block attributes"""
+        if block['type'] != self.code:
+            return block
+
         attr = PandocAttributes(block['attributes'], 'markdown')
+
         try:
             language = set(attr.classes).intersection(languages).pop()
             attr.classes.remove(language)
         except KeyError:
             language = None
 
-        # ensure one identifier for python code
-        if language in ('python', 'py', '', None):
-            block['language'] = self.python
-        # add alternate language execution magic
-        elif language != self.python and self.magic:
-            block['content'] = CodeMagician.magic(language) + block['content']
-            block['language'] = language
+        if self.match == 'all':
+            pass
+        elif self.match == 'fenced':
+            if block.get('indent'):
+                return self.new_text_block(content=('\n' +
+                                                    block['icontent']
+                                                    + '\n'))
+        elif self.match == 'strict':
+            if 'input' not in attr.classes:
+                return self.new_text_block(content=block['raw'])
+
+        elif self.match != language:
+            return self.new_text_block(content=block['raw'])
 
         # set input / output status of cell
         if 'output' in attr.classes and 'json' in attr.classes:
@@ -179,9 +195,19 @@ class MarkdownReader(NotebookReader):
             attr.classes.remove('input')
         else:
             block['IO'] = 'input'
-        # TODO: would like some way to pass code as markdown
 
+        block['language'] = language
         block['attributes'] = attr
+
+        # ensure one identifier for python code
+        if language in ('python', 'py', '', None):
+            block['language'] = self.python
+        # add alternate language execution magic
+        elif language != self.python and self.magic:
+            block['content'] = CodeMagician.magic(language) + block['content']
+            block['language'] = language
+
+        return self.new_code_block(**block)
 
     def parse_blocks(self, text):
         """Extract the code and non-code blocks from given markdown text.
@@ -212,7 +238,7 @@ class MarkdownReader(NotebookReader):
         text_blocks = [self.new_text_block(content=text[i:j])
                        for i, j in text_limits]
 
-        # remove indents, add code magic, etc.
+        # remove indents
         map(self.pre_process_code_block, code_blocks)
         # remove blank line at start and end of markdown
         map(self.pre_process_text_block, text_blocks)
@@ -298,9 +324,9 @@ class MarkdownReader(NotebookReader):
             # TODO: if first block is markdown, place after?
             all_blocks.insert(0, self.pre_code_block)
 
-        [self.process_code_block(b) for b in all_blocks if b['type'] == 'code']
+        blocks = [self.process_code_block(block) for block in all_blocks]
 
-        cells = self.create_cells(all_blocks)
+        cells = self.create_cells(blocks)
 
         ws = nbbase.new_worksheet(cells=cells)
         nb = nbbase.new_notebook(worksheets=[ws])
