@@ -2,7 +2,7 @@ Convert IPython Notebooks to markdown (and back)
 ------------------------------------------------
 
 [notedown] is a simple tool to create [IPython notebooks][ipython]
-from markdown and r-markdown.
+from markdown (and r-markdown).
 
 [ipython]: http://www.ipython.org/notebook
 [notedown]: http://github.com/aaren/notedown
