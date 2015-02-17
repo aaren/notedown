@@ -88,7 +88,7 @@ def cli_parser():
                         help="markdown input file (default STDIN)",
                         nargs="?",
                         default='-')
-    parser.add_argument('--output',
+    parser.add_argument('-o', '--output',
                         help="output file, (default STDOUT)",
                         default='-')
     parser.add_argument('--from',
