@@ -3,7 +3,7 @@
 {% block input %}{{ cell | create_input_codeblock }}{% endblock input %}
 
 {% block markdowncell scoped %}
-{{ cell.source }}
+{{ cell.source | wrap_text(80) }}
 {% endblock markdowncell %}
 
 {% block outputs %}
