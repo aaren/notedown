@@ -14,6 +14,7 @@ from IPython.nbformat.v3.nbjson import JSONReader as nbJSONReader
 from IPython.nbformat.v3.nbjson import BytesEncoder
 
 from IPython.utils import py3compat
+from IPython.utils.py3compat import unicode_type
 
 from IPython.nbconvert import MarkdownExporter
 
@@ -396,7 +397,13 @@ class MarkdownWriter(NotebookWriter):
             self.write_resources(resources)
 
         # remove any blank lines added at start and end by template
-        return re.sub(r'\A\s*\n|^\s*\Z', '', body)
+        text = re.sub(r'\A\s*\n|^\s*\Z', '', body)
+
+        if not py3compat.PY3 and not isinstance(text, unicode_type):
+            # this branch is likely only taken for JSON on Python 2
+            text = py3compat.str_to_unicode(text)
+
+        return text
 
     def write_resources(self, resources):
         """Write the output data in resources returned by exporter

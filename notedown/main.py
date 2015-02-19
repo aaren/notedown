@@ -230,8 +230,11 @@ def cli():
     if not args.output and args.input_file != '-':
         # overwrite
         fout = os.path.splitext(args.input_file)[0] + output_ext[outformat]
+        # grab the output here so we don't obliterate the file if
+        # there is an error
+        output = writer.writes(notebook)
         with open(fout, 'w') as op:
-            writer.write(notebook, op)
+            op.write(output)
 
     elif not args.output and args.input_file == '-':
         # overwrite error (input is stdin)
