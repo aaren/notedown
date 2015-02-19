@@ -1,13 +1,13 @@
 {% extends 'display_priority.tpl' %}
 
-{% block input %}{{ cell | create_input_codeblock }}{% endblock input %}
+{% block input %}
+{{ cell | create_input_codeblock }}
+{% endblock input %}
 
-{% block markdowncell scoped %}
-{{ cell.source | wrap_text(80) }}
+{% block markdowncell scoped %}{{ cell.source | wrap_text(80) }}
 {% endblock markdowncell %}
 
-{% block outputs %}
-{{ cell | create_output_block }}
+{% block outputs %}{{ cell | create_output_block }}
 {% endblock outputs %}
 
 {% block headingcell scoped %}

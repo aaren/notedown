@@ -150,19 +150,10 @@ class MarkdownReader(NotebookReader):
     def pre_process_text_block(block):
         """Apply pre processing to text blocks.
 
-        Currently just strips a single blank line from the beginning
+        Currently just strips whitespace from the beginning
         and end of the block.
         """
-        block['content'] = re.sub(r"""(?mx)
-                                  (
-                                  (?:\A[ \t]*\n)
-                                  |
-                                  (?:\n^[ \t]*\n\Z)
-                                  |
-                                  (?:\n\Z)
-                                  )""",
-                                  '',
-                                  block['content'])
+        block['content'] = block['content'].strip()
 
     def process_code_block(self, block):
         """Parse block attributes"""
@@ -433,7 +424,7 @@ class MarkdownWriter(NotebookWriter):
         return py3compat.str_to_unicode(json.dumps(string, **kwargs), 'utf-8')
 
     def create_input_codeblock(self, cell):
-        codeblock = ('\n{fence}{attributes}\n'
+        codeblock = ('{fence}{attributes}\n'
                      '{cell.input}\n'
                      '{fence}\n')
         attrs = self.create_attributes(cell, cell_type='input')
@@ -446,7 +437,7 @@ class MarkdownWriter(NotebookWriter):
             return self.create_output_codeblock(cell)
 
     def create_output_codeblock(self, cell):
-        codeblock = ('\n{fence}{{.json .output n={prompt_number}}}\n'
+        codeblock = ('{fence}{{.json .output n={prompt_number}}}\n'
                      '{contents}\n'
                      '{fence}\n')
         return codeblock.format(fence='```',
