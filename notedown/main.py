@@ -89,8 +89,15 @@ def cli_parser():
                         nargs="?",
                         default='-')
     parser.add_argument('-o', '--output',
-                        help="output file, (default STDOUT)",
-                        default='-')
+                        help=("output file, (default STDOUT). "
+                              "If flag used but no file given, use "
+                              "the name of the input file to "
+                              "determine the output filename. "
+                              "This will OVERWRITE if input and output "
+                              "formats are the same."),
+                        nargs="?",
+                        default='-',
+                        const='')
     parser.add_argument('--from',
                         dest='informat',
                         choices=('notebook', 'markdown'),
@@ -217,10 +224,25 @@ def cli():
     if args.run:
         run(notebook)
 
-    if args.output == '-':
+    output_ext = {'markdown': '.md',
+                  'notebook': '.ipynb'}
+
+    if not args.output and args.input_file != '-':
+        # overwrite
+        fout = os.path.splitext(args.input_file)[0] + output_ext[outformat]
+        with open(fout, 'w') as op:
+            writer.write(notebook, op)
+
+    elif not args.output and args.input_file == '-':
+        # overwrite error (input is stdin)
+        exit('Cannot overwrite with no input file given.')
+
+    elif args.output == '-':
+        # write stdout
         writer.write(notebook, sys.stdout)
 
     elif args.output != '-':
+        # write to filename
         with open(args.output, 'w') as op:
             writer.write(notebook, op)
 
