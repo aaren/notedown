@@ -137,9 +137,6 @@ def cli_parser():
                         action='store_false',
                         dest='magic',
                         help=("disable code magic."))
-    parser.add_argument('--examples',
-                        help=('show example usage'),
-                        action='store_true')
     parser.add_argument('--render',
                         help=('render outputs, forcing markdown output'),
                         action='store_true')
@@ -151,6 +148,9 @@ def cli_parser():
                               "converted into code cells. "
                               "choose from 'all' (default), 'fenced', "
                               "'strict' or a specific language to match on"))
+    parser.add_argument('--examples',
+                        help=('show example usage'),
+                        action='store_true')
 
     return parser
 
