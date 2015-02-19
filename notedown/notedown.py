@@ -11,6 +11,9 @@ from IPython.nbformat.v3.rwbase import NotebookReader
 from IPython.nbformat.v3.rwbase import NotebookWriter
 from IPython.nbformat.v3.nbjson import JSONWriter as nbJSONWriter
 from IPython.nbformat.v3.nbjson import JSONReader as nbJSONReader
+from IPython.nbformat.v3.nbjson import BytesEncoder
+
+from IPython.utils import py3compat
 
 from IPython.nbconvert import MarkdownExporter
 
@@ -419,8 +422,12 @@ class MarkdownWriter(NotebookWriter):
         # but there is a special encoder in ipython that we can get at
         # through the jsonwriter, so we'll use that. this is a bit hacky
         # as we are pretending that the string is actually a notebook.
-        writer = nbJSONWriter()
-        return writer.writes(string, split_lines=False)
+        kwargs = {}
+        kwargs['cls'] = BytesEncoder
+        kwargs['indent'] = 1
+        kwargs['sort_keys'] = True
+        kwargs['separators'] = (',', ': ')
+        return py3compat.str_to_unicode(json.dumps(string, **kwargs), 'utf-8')
 
     def create_input_codeblock(self, cell):
         codeblock = ('\n{fence}{attributes}\n'
