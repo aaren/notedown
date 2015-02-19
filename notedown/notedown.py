@@ -417,16 +417,12 @@ class MarkdownWriter(NotebookWriter):
     def string2json(self, string):
         """Convert json into it's string representation.
         Used for writing outputs to markdown."""
-        # we can do this:
-        # return json.dumps(string, **kwargs)
-        # but there is a special encoder in ipython that we can get at
-        # through the jsonwriter, so we'll use that. this is a bit hacky
-        # as we are pretending that the string is actually a notebook.
-        kwargs = {}
-        kwargs['cls'] = BytesEncoder
-        kwargs['indent'] = 1
-        kwargs['sort_keys'] = True
-        kwargs['separators'] = (',', ': ')
+        kwargs = {
+            'cls': BytesEncoder,  # use the IPython bytes encoder
+            'indent': 1,
+            'sort_keys': True,
+            'separators': (',', ': '),
+        }
         return py3compat.str_to_unicode(json.dumps(string, **kwargs), 'utf-8')
 
     def create_input_codeblock(self, cell):
