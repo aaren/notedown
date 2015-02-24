@@ -66,41 +66,6 @@ executed notebook:
 [runipy]: https://github.com/paulgb/runipy
 
 
-### Rendering outputs in markdown
-
-This is experimental!
-
-Convert a notebook into markdown, rendering cell outputs as native
-markdown elements:
-
-    notedown input.ipynb --render
-
-This means that e.g. png outputs become `![](data-uri)` images and
-that text is placed in the document.
-
-Of course, you can use this in conjuntion with runipy to produce
-markdown-with-code-and-figures from markdown-with-code:
-
-    notedown input.md --run --render > output.md
-
-Not a notebook in sight!
-
-The `--render` flag forces the output format to markdown.
-
-
-### Magic
-
-Fenced code blocks annotated with a language other than python are
-read into cells using IPython's `%%` [cell magic][].
-
-[cell magic]: http://nbviewer.ipython.org/github/ipython/ipython/blob/1.x/examples/notebooks/Cell%20Magics.ipynb
-
-You can disable this with `--nomagic`.
-
-- `--pre` lets you add arbitrary code to the start of the notebook.
-  e.g. `notedown file.md --pre '%matplotlib inline' 'import numpy as np'`
-
-
 ### R-markdown
 
 You can use `notedown` to convert r-markdown as well. We just need
@@ -121,6 +86,19 @@ Convert r-markdown into an IPython notebook:
   automatically.
 
 [knitr]: yihui.name/knitr
+
+
+### Magic
+
+Fenced code blocks annotated with a language other than python are
+read into cells using IPython's `%%` [cell magic][].
+
+[cell magic]: http://nbviewer.ipython.org/github/ipython/ipython/blob/1.x/examples/notebooks/Cell%20Magics.ipynb
+
+You can disable this with `--nomagic`.
+
+- `--pre` lets you add arbitrary code to the start of the notebook.
+  e.g. `notedown file.md --pre '%matplotlib inline' 'import numpy as np'`
 
 
 ### How do I put a literal code block in my markdown?
@@ -158,6 +136,28 @@ enough to highlight code in markdown.
 
 [vim-markdown]: https://github.com/tpope/vim-markdown
 [vim-pandoc]: https://github.com/vim-pandoc/vim-pandoc
+
+
+### Rendering outputs in markdown
+
+This is experimental!
+
+Convert a notebook into markdown, rendering cell outputs as native
+markdown elements:
+
+    notedown input.ipynb --render
+
+This means that e.g. png outputs become `![](data-uri)` images and
+that text is placed in the document.
+
+Of course, you can use this in conjuntion with runipy to produce
+markdown-with-code-and-figures from markdown-with-code:
+
+    notedown input.md --run --render > output.md
+
+Not a notebook in sight!
+
+The `--render` flag forces the output format to markdown.
 
 
 ### TODO
