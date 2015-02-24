@@ -2,9 +2,6 @@ import subprocess
 
 from setuptools import setup
 
-import notedown
-
-
 pandoc = subprocess.Popen(['pandoc', 'README.md', '--to', 'rst'],
                           stdout=subprocess.PIPE)
 
@@ -12,7 +9,7 @@ rst_readme = pandoc.communicate()[0]
 
 setup(
     name="notedown",
-    version=notedown.__version__,
+    version="1.2.8",
     description="Convert markdown to IPython notebook.",
     long_description=rst_readme,
     packages=['notedown'],

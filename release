@@ -7,16 +7,13 @@
 NEW_VERSION=$1
 
 # bump the version number in notedown/main.py
-sed -i -e "s/__version__ = .*/__version__ = "'"'$NEW_VERSION'"'"/" notedown/main.py &&
+sed -i -e "s/version=.*,/version="'"'$NEW_VERSION'"'",/" setup.py &&
 
 # upload to pypi
 python setup.py sdist upload -r pypi &&
 
-# setup.py should derive the version number from notedown
-# automatically
-
 # commit the version bump
-git add notedown/main.py &&
+git add setup.py &&
 git commit -m "release $NEW_VERSION" &&
 
 # git tag the release

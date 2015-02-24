@@ -1,5 +1,3 @@
-__version__ = "1.2.7"
-
 import os
 import sys
 import argparse
@@ -11,6 +9,8 @@ from .notedown import (MarkdownReader,
                        JSONWriter,
                        Knitr)
 
+
+__version__ = pkg_resources.require('notedown')[0].version
 
 markdown_template \
     = pkg_resources.resource_filename('notedown',
