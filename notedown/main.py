@@ -153,6 +153,9 @@ def cli_parser():
     parser.add_argument('--examples',
                         help=('show example usage'),
                         action='store_true')
+    parser.add_argument('--version',
+                        help=('print version number'),
+                        action='store_true')
 
     return parser
 
@@ -160,6 +163,10 @@ def cli_parser():
 def cli():
     parser = cli_parser()
     args = parser.parse_args()
+
+    if args.version:
+        print __version__
+        exit()
 
     if args.examples:
         print examples
