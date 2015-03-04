@@ -3,10 +3,10 @@ import sys
 import argparse
 import pkg_resources
 
+import IPython.nbformat as nbformat
+
 from .notedown import (MarkdownReader,
                        MarkdownWriter,
-                       JSONReader,
-                       JSONWriter,
                        Knitr)
 
 
@@ -18,6 +18,12 @@ markdown_template \
 markdown_figure_template \
     = pkg_resources.resource_filename('notedown',
                                       'templates/markdown_outputs.tpl')
+
+
+def strip(notebook):
+    """Remove outputs from a notebook."""
+    for cell in notebook.cells:
+        cell.outputs = []
 
 
 def run(notebook):
@@ -203,17 +209,15 @@ def cli():
 
     # reader and writer classes with args and kwargs to
     # instantiate with
-    readers = {'notebook': (JSONReader, [], {}),
-               'markdown': (MarkdownReader,
-                            [],
-                            {'precode': '\n'.join(args.precode),
-                             'magic': args.magic,
-                             'match': args.match})
+    readers = {'notebook': nbformat,
+               'markdown': MarkdownReader(precode='\n'.join(args.precode),
+                                          magic=args.magic,
+                                          match=args.match)
                }
-    writers = {'notebook': (JSONWriter, [args.strip_outputs], {}),
-               'markdown': (MarkdownWriter,
-                            [template_file],
-                            {'strip_outputs': args.strip_outputs})
+
+    writers = {'notebook': nbformat,
+               'markdown': MarkdownWriter(template_file,
+                                          strip_outputs=args.strip_outputs)
                }
 
     informat = args.informat or ftdetect(input_file.name) or 'markdown'
@@ -222,16 +226,17 @@ def cli():
     if args.render:
         outformat = 'markdown'
 
-    Reader, rargs, rkwargs = readers[informat]
-    Writer, wargs, wkwargs = writers[outformat]
-    reader = Reader(*rargs, **rkwargs)
-    writer = Writer(*wargs, **wkwargs)
+    reader = readers[informat]
+    writer = writers[outformat]
 
     with input_file as ip:
-        notebook = reader.read(ip)
+        notebook = reader.read(ip, as_version=4)
 
     if args.run:
         run(notebook)
+
+    if args.strip_outputs:
+        strip(notebook)
 
     output_ext = {'markdown': '.md',
                   'notebook': '.ipynb'}

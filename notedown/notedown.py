@@ -4,14 +4,12 @@ import json
 import tempfile
 
 
-import IPython.nbformat.v3.nbbase as nbbase
-from IPython.nbformat import current as nbformat
+import IPython.nbformat.v4.nbbase as nbbase
+import IPython.nbformat.v4 as v4
 
-from IPython.nbformat.v3.rwbase import NotebookReader
-from IPython.nbformat.v3.rwbase import NotebookWriter
-from IPython.nbformat.v3.nbjson import JSONWriter as nbJSONWriter
-from IPython.nbformat.v3.nbjson import JSONReader as nbJSONReader
-from IPython.nbformat.v3.nbjson import BytesEncoder
+from IPython.nbformat.v4.rwbase import NotebookReader
+from IPython.nbformat.v4.rwbase import NotebookWriter
+from IPython.nbformat.v4.nbjson import BytesEncoder
 
 from IPython.utils import py3compat
 from IPython.utils.py3compat import unicode_type
@@ -261,13 +259,13 @@ class MarkdownReader(NotebookReader):
     @staticmethod
     def create_code_cell(block):
         """Create a notebook code cell from a block."""
-        code_cell = nbbase.new_code_cell(input=block['content'])
+        code_cell = nbbase.new_code_cell(source=block['content'])
 
         attr = block['attributes']
         if not attr.is_empty:
             code_cell.metadata \
                 = nbbase.NotebookNode({'attributes': attr.to_dict()})
-            code_cell.prompt_number = attr.kvs.get('n')
+            code_cell.execution_count = attr.kvs.get('n')
 
         return code_cell
 
@@ -276,7 +274,7 @@ class MarkdownReader(NotebookReader):
         """Create a markdown cell from a block."""
         kwargs = {'cell_type': block['type'],
                   'source': block['content']}
-        markdown_cell = nbbase.new_text_cell(**kwargs)
+        markdown_cell = nbbase.new_markdown_cell(**kwargs)
         return markdown_cell
 
     @staticmethod
@@ -323,8 +321,7 @@ class MarkdownReader(NotebookReader):
 
         cells = self.create_cells(blocks)
 
-        ws = nbbase.new_worksheet(cells=cells)
-        nb = nbbase.new_notebook(worksheets=[ws])
+        nb = nbbase.new_notebook(cells=cells)
 
         return nb
 
@@ -377,7 +374,7 @@ class MarkdownWriter(NotebookWriter):
         tmp.close()
 
     def write_from_json(self, notebook_json):
-        notebook = nbformat.reads_json(notebook_json)
+        notebook = v4.reads_json(notebook_json)
         return self.write(notebook)
 
     def writes(self, notebook):
@@ -425,7 +422,7 @@ class MarkdownWriter(NotebookWriter):
 
     def create_input_codeblock(self, cell):
         codeblock = ('{fence}{attributes}\n'
-                     '{cell.input}\n'
+                     '{cell.source}\n'
                      '{fence}')
         attrs = self.create_attributes(cell, cell_type='input')
         return codeblock.format(attributes=attrs, fence='```', cell=cell)
@@ -437,18 +434,18 @@ class MarkdownWriter(NotebookWriter):
             return self.create_output_codeblock(cell)
 
     def create_output_codeblock(self, cell):
-        codeblock = ('{fence}{{.json .output n={prompt_number}}}\n'
+        codeblock = ('{fence}{{.json .output n={execution_count}}}\n'
                      '{contents}\n'
                      '{fence}')
         return codeblock.format(fence='```',
-                                prompt_number=cell.prompt_number,
+                                execution_count=cell.execution_count,
                                 contents=self.string2json(cell.outputs))
 
     def create_attributes(self, cell, cell_type=None):
         """Turn the attribute dict into an attribute string
         for the code block.
         """
-        if self.strip_outputs or not hasattr(cell, 'prompt_number'):
+        if self.strip_outputs or not hasattr(cell, 'execution_count'):
             return 'python'
 
         attrs = cell.metadata.get('attributes')
@@ -469,8 +466,8 @@ class MarkdownWriter(NotebookWriter):
             # ensure python goes first so that github highlights it
             attr.classes.insert(0, 'python')
             attr.classes.insert(1, 'input')
-            if cell.prompt_number:
-                attr.kvs['n'] = cell.prompt_number
+            if cell.execution_count:
+                attr.kvs['n'] = cell.execution_count
             return attr.to_markdown(format='{classes} {id} {kvs}')
 
         else:
@@ -502,30 +499,6 @@ class MarkdownWriter(NotebookWriter):
         uri = r"data:{mime};base64,{data}"
         return uri.format(mime=inverse_map[data_type],
                           data=data.replace('\n', ''))
-
-
-class JSONReader(nbJSONReader):
-    pass
-
-
-class JSONWriter(nbJSONWriter):
-    """Subclass the standard JSONWriter to allow stripping
-    of outputs.
-    """
-    def __init__(self, strip_outputs=False):
-        self.strip_outputs = strip_outputs
-
-    def strip_output_cells(self, notebook):
-        ws = notebook.worksheets[0]
-        for cell in ws.cells:
-            cell.outputs = []
-        return notebook
-
-    def writes(self, notebook):
-        if self.strip_outputs:
-            notebook = self.strip_output_cells(notebook)
-
-        return super(JSONWriter, self).writes(notebook)
 
 
 class CodeMagician(object):
