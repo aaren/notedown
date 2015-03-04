@@ -1,7 +1,8 @@
 {% extends 'display_priority.tpl' %}
 
-{% block input %}{{ cell | create_input_codeblock }}{% endblock input %}
-
+{% block input %}
+{{ cell | create_input_codeblock }}
+{% endblock input %}
 
 {% block markdowncell scoped %}
 {{ cell.source }}

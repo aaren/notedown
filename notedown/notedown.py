@@ -426,7 +426,7 @@ class MarkdownWriter(NotebookWriter):
     def create_input_codeblock(self, cell):
         codeblock = ('{fence}{attributes}\n'
                      '{cell.input}\n'
-                     '{fence}\n')
+                     '{fence}')
         attrs = self.create_attributes(cell, cell_type='input')
         return codeblock.format(attributes=attrs, fence='```', cell=cell)
 
@@ -439,7 +439,7 @@ class MarkdownWriter(NotebookWriter):
     def create_output_codeblock(self, cell):
         codeblock = ('{fence}{{.json .output n={prompt_number}}}\n'
                      '{contents}\n'
-                     '{fence}\n')
+                     '{fence}')
         return codeblock.format(fence='```',
                                 prompt_number=cell.prompt_number,
                                 contents=self.string2json(cell.outputs))

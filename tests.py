@@ -291,7 +291,7 @@ def test_pre_process_text():
     ref = "\t \n\n   \t\n\ntext \t \n\n\n"
     block['content'] = ref
     notedown.MarkdownReader.pre_process_text_block(block)
-    expected = "\n   \t\n\ntext \t \n"
+    expected = "text"
     print "---"
     print "in: "
     print ref
