@@ -9,7 +9,7 @@ rst_readme = pandoc.communicate()[0]
 
 setup(
     name="notedown",
-    version="1.2.8",
+    version="1.2.9",
     description="Convert markdown to IPython notebook.",
     long_description=rst_readme,
     packages=['notedown'],
