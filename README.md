@@ -1,3 +1,11 @@
+*Please note: IPython 3 has been released but I haven't got round to
+supporting it yet. Therefore notedown requires IPython < 3.*
+
+*If this is important to you then encourage me to fix it on the
+[issue](https://github.com/aaren/notedown/issues/13) or help me out
+on the [pull request](https://github.com/aaren/notedown/issues/14).*
+
+
 Convert IPython Notebooks to markdown (and back)
 ------------------------------------------------
 
