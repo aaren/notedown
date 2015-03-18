@@ -10,7 +10,7 @@ NEW_VERSION=$1
 sed -i -e "s/version=.*,/version="'"'$NEW_VERSION'"'",/" setup.py &&
 
 # upload to pypi
-python setup.py sdist upload -r pypi &&
+python setup.py sdist bdist_wheel upload -r pypi &&
 
 # commit the version bump
 git add setup.py &&
