@@ -25,15 +25,15 @@ unknown type  {{ cell.type }}
 
 {% block output %}{{ super () }}{% endblock output %}
 
-{% block pyerr %}
+{% block error %}
 {{ super() }}
-{% endblock pyerr %}
+{% endblock error %}
 
 {% block traceback_line %}
 {{ line | strip_ansi }}
 {% endblock traceback_line %}
 
-{% block pyout %}{% endblock pyout %}
+{% block execute_result %}{% endblock execute_result %}
 
 {% block stream %}{{ output.text }}{% endblock stream %}
 
@@ -43,19 +43,19 @@ unknown type  {{ cell.type }}
 
 {% block data_svg %}
 <div {{ cell | create_attributes('figure') }}>
-![{{ caption(cell) }}]({{ output.svg | data2uri(data_type='svg') }})
+![{{ caption(cell) }}]({{ output.data | data2uri(data_type='svg') }})
 </div>
 {% endblock data_svg %}
 
 {% block data_png %}
 <div {{ cell | create_attributes('figure') }}>
-![{{ caption(cell) }}]({{ output.png | data2uri(data_type='png') }})
+![{{ caption(cell) }}]({{ output.data | data2uri(data_type='png') }})
 </div>
 {% endblock data_png %}
 
 {% block data_jpg %}
 <div {{ cell | create_attributes('figure') }}>
-![{{ caption(cell) }}]({{ output.jpeg | data2uri(data_type='jpeg') }})
+![{{ caption(cell) }}]({{ output.data | data2uri(data_type='jpeg') }})
 </div>
 {% endblock data_jpg %}
 

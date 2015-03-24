@@ -496,9 +496,10 @@ class MarkdownWriter(NotebookWriter):
             'image/svg+xml': 'svg',
         }
         inverse_map = {v: k for k, v in MIME_MAP.items()}
+        mime_type = inverse_map[data_type]
         uri = r"data:{mime};base64,{data}"
-        return uri.format(mime=inverse_map[data_type],
-                          data=data.replace('\n', ''))
+        return uri.format(mime=mime_type,
+                          data=data[mime_type].replace('\n', ''))
 
 
 class CodeMagician(object):
