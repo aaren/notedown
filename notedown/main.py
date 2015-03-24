@@ -137,7 +137,7 @@ def cli_parser():
     parser.add_argument('--rmagic',
                         action='store_true',
                         help=("autoload the rmagic extension. Synonym for "
-                              "--precode '%%load_ext rmagic'"))
+                              "--precode '%%load_ext rpy2.ipython'"))
     parser.add_argument('--nomagic',
                         action='store_false',
                         dest='magic',
@@ -195,7 +195,7 @@ def cli():
         input_file = knitr.knit(input_file, opts_chunk=args.knit)
 
     if args.rmagic:
-        args.precode.append(r"%load_ext rmagic")
+        args.precode.append(r"%load_ext rpy2.ipython")
 
     if args.render:
         template_file = markdown_figure_template
