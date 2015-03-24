@@ -2,6 +2,8 @@ import os
 
 import nose.tools as nt
 
+import IPython.nbformat as nbformat
+
 import notedown
 
 simple_backtick = """
@@ -101,66 +103,58 @@ Installation:
 #    import notedown
 #    reader = notedown.MarkdownReader()
 #    sample_notebook = reader.reads(sample_markdown)
-#    writer = notedown.JSONWriter()
-#    print writer.writes(sample_notebook)
+#    print nbformat.writes(sample_notebook)
 #
 # which is defined in create_json_notebook() below
 
-sample_notebook = r"""{
- "metadata": {},
- "nbformat": 3,
- "nbformat_minor": 0,
- "worksheets": [
-  {
-   "cells": [
-    {
-     "cell_type": "markdown",
-     "metadata": {},
-     "source": [
-      "### Create IPython Notebooks from markdown\n",
-      "\n",
-      "This is a simple tool to convert markdown with code into an IPython\n",
-      "Notebook.\n",
-      "\n",
-      "Usage:"
-     ]
-    },
-    {
-     "cell_type": "code",
-     "collapsed": false,
-     "input": [
-      "notedown input.md > output.ipynb"
-     ],
-     "language": "python",
-     "metadata": {},
-     "outputs": []
-    },
-    {
-     "cell_type": "markdown",
-     "metadata": {},
-     "source": [
-      "It is really simple and separates your markdown into code and not\n",
-      "code. Code goes into code cells, not-code goes into markdown cells.\n",
-      "\n",
-      "Installation:"
-     ]
-    },
-    {
-     "cell_type": "code",
-     "collapsed": false,
-     "input": [
-      "pip install notedown"
-     ],
-     "language": "python",
-     "metadata": {},
-     "outputs": []
-    }
-   ],
-   "metadata": {}
-  }
- ]
-}"""
 
+sample_notebook = r"""{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Create IPython Notebooks from markdown\n",
+    "\n",
+    "This is a simple tool to convert markdown with code into an IPython\n",
+    "Notebook.\n",
+    "\n",
+    "Usage:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "notedown input.md > output.ipynb"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "It is really simple and separates your markdown into code and not\n",
+    "code. Code goes into code cells, not-code goes into markdown cells.\n",
+    "\n",
+    "Installation:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pip install notedown"
+   ]
+  }
+ ],
+ "metadata": {},
+ "nbformat": 4,
+ "nbformat_minor": 0
+}"""
 
 roundtrip_markdown = u"""## A roundtrip test
 
@@ -180,10 +174,9 @@ b = 2
 
 def create_json_notebook(markdown):
     reader = notedown.MarkdownReader()
-    writer = notedown.JSONWriter()
 
     notebook = reader.reads(markdown)
-    json_notebook = writer.writes(notebook)
+    json_notebook = nbformat.writes(notebook)
     return json_notebook
 
 
@@ -314,12 +307,10 @@ def test_roundtrip():
     roundtrip_notebook = mr.to_notebook(roundtrip_markdown)
 
     # write the notebook into json
-    jw = notedown.JSONWriter()
-    notebook_json = jw.writes(roundtrip_notebook)
+    notebook_json = nbformat.writes(roundtrip_notebook)
 
     # write the json back into notebook
-    jr = notedown.JSONReader()
-    notebook = jr.reads(notebook_json)
+    notebook = nbformat.reads(notebook_json, as_version=4)
 
     # convert notebook to markdown
     mw = notedown.MarkdownWriter(template_file='notedown/templates/markdown.tpl', strip_outputs=True)
