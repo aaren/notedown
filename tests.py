@@ -334,3 +334,29 @@ def test_markdown_markdown():
     mw = notedown.MarkdownWriter(notedown.markdown_template)
     nb = mr.reads(roundtrip_markdown)
     mw.writes(nb)
+
+
+def test_R():
+    """Check that the R notebook generated from Rmd looks the same
+    as the reference (without output cells).
+    """
+    knitr = notedown.Knitr()
+    with open('r-examples/r-example.Rmd') as rmd:
+        knitted_markdown_file = knitr.knit(rmd)
+
+    reader = notedown.MarkdownReader(precode=r"%load_ext rpy2.ipython",
+                                     magic=True)
+    notebook = reader.read(knitted_markdown_file)
+
+    with open('r-examples/r-example.ipynb') as f:
+        reference_notebook = nbformat.read(f, as_version=4)
+
+    notedown.main.strip(notebook)
+    notedown.main.strip(reference_notebook)
+
+    writer = nbformat
+
+    nbjson = writer.writes(notebook)
+    reference_nbjson = writer.writes(reference_notebook)
+
+    nt.assert_multi_line_equal(nbjson, reference_nbjson)
