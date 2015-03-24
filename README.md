@@ -1,12 +1,4 @@
-*Please note: IPython 3 has been released but I haven't got round to
-supporting it yet. Therefore notedown requires IPython < 3.*
-
-*If this is important to you then encourage me to fix it on the
-[issue] or help me out on the [pull request].*
-
-[issue]: https://github.com/aaren/notedown/issues/13
-[pull request]: https://github.com/aaren/notedown/issues/14
-
+*Now supporting IPython 3!*
 
 Convert IPython Notebooks to markdown (and back)
 ------------------------------------------------
@@ -62,19 +54,7 @@ Strip the output cells from markdown:
 
 ### Running an IPython Notebook
 
-You can run notebooks non-interactively from the command line using
-[runipy]:
-
-    pip install runipy
-    runipy your_notebook.ipynb
-
-`runipy` can be used with notedown to turn markdown into an
-executed notebook:
-
     notedown notebook.md --run > executed_notebook.ipynb
-
-[runipy]: https://github.com/paulgb/runipy
-
 
 ### R-markdown
 
