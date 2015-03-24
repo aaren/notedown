@@ -70,12 +70,13 @@ Convert r-markdown into an IPython notebook:
 
     notedown input.Rmd --knit > output.ipynb
 
-- `--rmagic` will add `%load_ext rmagic` at the start of the
+- `--rmagic` will add `%load_ext rpy2.ipython` at the start of the
   notebook, allowing you to execute code cells using the rmagic
-  extension. notedown does the appropriate `%R` cell magic
-  automatically.
+  extension (requires [rpy2]). notedown does the appropriate `%R`
+  cell magic automatically.
 
 [knitr]: yihui.name/knitr
+[rpy2]: http://rpy.sourceforge.net/
 
 
 ### Magic
