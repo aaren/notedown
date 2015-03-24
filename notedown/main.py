@@ -58,7 +58,7 @@ Strip the output cells from markdown:
     notedown with_output_cells.md --to markdown --strip > no_output_cells.md
 
 
-Convert from markdown and execute using runipy:
+Convert from markdown and execute:
 
     notedown input.md --run > executed_notebook.ipynb
 
@@ -113,7 +113,8 @@ def cli_parser():
                               "this to 'markdown'"))
     parser.add_argument('--run',
                         action='store_true',
-                        help=("run the notebook using runipy"))
+                        help=("run the notebook, executing the "
+                              "contents of each cell"))
     parser.add_argument('--strip',
                         action='store_true',
                         dest='strip_outputs',
