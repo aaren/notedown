@@ -14,7 +14,7 @@ except OSError:
 
 setup(
     name="notedown",
-    version="1.2.10",
+    version="1.3.0",
     description="Convert markdown to IPython notebook.",
     long_description=readme,
     packages=['notedown'],
