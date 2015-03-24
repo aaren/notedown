@@ -333,7 +333,8 @@ def test_markdown_markdown():
     mr = notedown.MarkdownReader()
     mw = notedown.MarkdownWriter(notedown.markdown_template)
     nb = mr.reads(roundtrip_markdown)
-    mw.writes(nb)
+    markdown = mw.writes(nb)
+    nt.assert_multi_line_equal(markdown, roundtrip_markdown)
 
 
 def test_R():
