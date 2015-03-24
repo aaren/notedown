@@ -2,6 +2,7 @@ import re
 import os
 import json
 import tempfile
+import subprocess
 
 
 import IPython.nbformat.v4.nbbase as nbbase
@@ -524,7 +525,7 @@ class CodeMagician(object):
 
 
 class Knitr(object):
-    def knit(self, input_file, opts_chunk=None):
+    def knit(self, input_file, opts_chunk='eval=FALSE'):
         """Use Knitr to convert the r-markdown input_file
         into markdown, returning a file object.
         """
@@ -558,9 +559,13 @@ class Knitr(object):
                 'library(knitr);'
                 'opts_knit$set({opts_knit});'
                 'opts_chunk$set({opts_chunk});'
-                'knit("{input}", output="{output}")\' '
-                '2> /dev/null')
+                'knit("{input}", output="{output}")\' ')
 
         cmd = rcmd.format(input=fin, output=fout,
                           opts_knit=opts_knit, opts_chunk=opts_chunk)
-        os.system(cmd)
+
+        p = subprocess.Popen(cmd,
+                             shell=True,  # Rscript needs the shell
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
