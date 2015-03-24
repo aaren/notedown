@@ -4,6 +4,7 @@ import argparse
 import pkg_resources
 
 import IPython.nbformat as nbformat
+from IPython.nbconvert.preprocessors.execute import ExecutePreprocessor
 
 from .notedown import (MarkdownReader,
                        MarkdownWriter,
@@ -27,15 +28,8 @@ def strip(notebook):
 
 
 def run(notebook):
-    """Run a notebook using runipy."""
-    try:
-        from runipy.notebook_runner import NotebookRunner
-    except ImportError:
-        raise('You need runipy installed to run notebooks!'
-              'try `pip install runipy`')
-
-    runner = NotebookRunner(notebook)
-    runner.run_notebook()
+    executor = ExecutePreprocessor()
+    notebook, resources = executor.preprocess(notebook, resources=None)
 
 
 examples = """
