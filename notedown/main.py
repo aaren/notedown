@@ -24,7 +24,9 @@ markdown_figure_template \
 def strip(notebook):
     """Remove outputs from a notebook."""
     for cell in notebook.cells:
-        cell.outputs = []
+        if cell.cell_type == 'code':
+            cell.outputs = []
+            cell.execution_count = None
 
 
 def run(notebook):
