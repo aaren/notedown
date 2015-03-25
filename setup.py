@@ -22,7 +22,7 @@ setup(
     author_email='dev@aaren.me',
     license='BSD 2-Clause',
     url='http://github.com/aaren/notedown',
-    install_requires=['ipython >= 3.0', 'jinja2', 'pandoc-attributes'],
+    install_requires=['ipython[nbconvert] >= 3.0', 'pandoc-attributes'],
     entry_points={'console_scripts': ['notedown = notedown:cli', ]},
     package_dir={'notedown': 'notedown'},
     package_data={'notedown': ['templates/markdown.tpl']},
