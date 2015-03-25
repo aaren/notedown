@@ -153,8 +153,5 @@ The `--render` flag forces the output format to markdown.
 
 ### TODO
 
-- [x] support more markdowns
-- [ ] allow other cell types?
-- [x] allow different language code cells (using %%lang magic)
-- [x] allow code attributes? pass to cell creator?
-- [x] code block format agnostic (fenced / indented)
+- [x] IPython 3 support
+- [ ] Allow kernel specification
