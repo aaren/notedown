@@ -7,7 +7,7 @@ try:
     pandoc = subprocess.Popen(['pandoc', 'README.md', '--to', 'rst'],
                               stdout=subprocess.PIPE)
 
-    readme = pandoc.communicate()[0]
+    readme = str(pandoc.communicate()[0])
 
 except OSError:
     with open('README.md') as f:
