@@ -415,7 +415,7 @@ class MarkdownWriter(NotebookWriter):
 
     # --- filter functions to be used in the output template --- #
     def string2json(self, string):
-        """Convert json into it's string representation.
+        """Convert json into its string representation.
         Used for writing outputs to markdown."""
         kwargs = {
             'cls': BytesEncoder,  # use the IPython bytes encoder
