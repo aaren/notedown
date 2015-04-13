@@ -33,7 +33,7 @@ def strip(notebook):
 
 def run(notebook):
     executor = ExecutePreprocessor()
-    notebook, resources = executor.preprocess(notebook, resources=None)
+    notebook, resources = executor.preprocess(notebook, resources={})
 
 
 examples = """
