@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import argparse
@@ -168,11 +170,11 @@ def cli():
     args = parser.parse_args()
 
     if args.version:
-        print __version__
+        print(__version__)
         exit()
 
     if args.examples:
-        print examples
+        print(examples)
         exit()
 
     # if no stdin and no input file

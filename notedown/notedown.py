@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 import os
 import json
@@ -18,6 +19,9 @@ from IPython.utils.py3compat import unicode_type
 from IPython.nbconvert import MarkdownExporter
 
 from pandocattributes import PandocAttributes
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 
 languages = ['python', 'r', 'ruby', 'bash']
@@ -223,7 +227,7 @@ class MarkdownReader(NotebookReader):
         # based on the code block edges
         text_starts = [0] + [m.end() for m in code_matches]
         text_stops = [m.start() for m in code_matches] + [len(text)]
-        text_limits = zip(text_starts, text_stops)
+        text_limits = list(zip(text_starts, text_stops))
 
         # list of the groups from the code blocks
         code_blocks = [self.new_code_block(**m.groupdict())
@@ -233,12 +237,12 @@ class MarkdownReader(NotebookReader):
                        for i, j in text_limits]
 
         # remove indents
-        map(self.pre_process_code_block, code_blocks)
+        list(map(self.pre_process_code_block, code_blocks))
         # remove blank line at start and end of markdown
-        map(self.pre_process_text_block, text_blocks)
+        list(map(self.pre_process_text_block, text_blocks))
 
         # create a list of the right length
-        all_blocks = range(len(text_blocks) + len(code_blocks))
+        all_blocks = list(range(len(text_blocks) + len(code_blocks)))
 
         # NOTE: the behaviour here is a bit fragile in that we
         # assume that cells must alternate between code and
@@ -398,7 +402,7 @@ class MarkdownWriter(NotebookWriter):
         """Write the output data in resources returned by exporter
         to files.
         """
-        for filename, data in resources.get('outputs', {}).items():
+        for filename, data in list(resources.get('outputs', {}).items()):
             # Determine where to write the file to
             dest = os.path.join(self.output_dir, filename)
             path = os.path.dirname(dest)
@@ -496,7 +500,7 @@ class MarkdownWriter(NotebookWriter):
             'application/javascript': 'html',
             'image/svg+xml': 'svg',
         }
-        inverse_map = {v: k for k, v in MIME_MAP.items()}
+        inverse_map = {v: k for k, v in list(MIME_MAP.items())}
         mime_type = inverse_map[data_type]
         uri = r"data:{mime};base64,{data}"
         return uri.format(mime=mime_type,
@@ -509,7 +513,7 @@ class CodeMagician(object):
 
     # convert to many to one lookup (found as self.aliases)
     aliases = {}
-    for k, v in many_aliases.items():
+    for k, v in list(many_aliases.items()):
         for key in k:
             aliases[key] = v
 
