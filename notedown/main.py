@@ -11,7 +11,11 @@ from .notedown import (MarkdownReader,
                        Knitr)
 
 
-__version__ = pkg_resources.require('notedown')[0].version
+try:
+    __version__ = pkg_resources.require('notedown')[0].version
+
+except pkg_resources.DistributionNotFound:
+    __version__ = 'testing'
 
 markdown_template \
     = pkg_resources.resource_filename('notedown',
