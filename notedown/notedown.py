@@ -367,7 +367,7 @@ class MarkdownWriter(NotebookWriter):
         on a relative path and read from there after copying the
         template to it.
         """
-        tmp = tempfile.NamedTemporaryFile(dir='./')
+        tmp = tempfile.NamedTemporaryFile(dir='./', mode='w+')
         tmp_path = os.path.relpath(tmp.name)
 
         with open(template_file) as orig:
@@ -534,8 +534,8 @@ class Knitr(object):
         into markdown, returning a file object.
         """
         # use temporary files at both ends to allow stdin / stdout
-        tmp_in = tempfile.NamedTemporaryFile()
-        tmp_out = tempfile.NamedTemporaryFile()
+        tmp_in = tempfile.NamedTemporaryFile(mode='w+')
+        tmp_out = tempfile.NamedTemporaryFile(mode='w+')
 
         tmp_in.file.write(input_file.read())
         tmp_in.file.flush()
