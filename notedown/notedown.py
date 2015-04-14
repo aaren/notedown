@@ -3,6 +3,7 @@ import os
 import json
 import tempfile
 import subprocess
+import io
 
 
 import IPython.nbformat.v4.nbbase as nbbase
@@ -366,7 +367,7 @@ class MarkdownWriter(NotebookWriter):
         tmp = tempfile.NamedTemporaryFile(dir='./')
         tmp_path = os.path.relpath(tmp.name)
 
-        with open(template_file) as orig:
+        with io.open(template_file, encoding='utf-8') as orig:
             tmp.file.write(orig.read())
             tmp.file.flush()
 
