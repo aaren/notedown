@@ -2,6 +2,8 @@ import os
 import sys
 import argparse
 import pkg_resources
+import io
+import codecs
 
 import IPython.nbformat as nbformat
 from IPython.nbconvert.preprocessors.execute import ExecutePreprocessor
@@ -188,7 +190,7 @@ def cli():
         input_file = sys.stdin
 
     elif args.input_file != '-':
-        input_file = open(args.input_file, 'r')
+        input_file = io.open(args.input_file, 'r', encoding='utf-8')
 
     else:
         exit('malformed input')
@@ -248,7 +250,7 @@ def cli():
         # grab the output here so we don't obliterate the file if
         # there is an error
         output = writer.writes(notebook)
-        with open(fout, 'w') as op:
+        with io.open(fout, 'w', encoding='utf-8') as op:
             op.write(output)
 
     elif not args.output and args.input_file == '-':
@@ -257,11 +259,11 @@ def cli():
 
     elif args.output == '-':
         # write stdout
-        writer.write(notebook, sys.stdout)
+        writer.write(notebook, codecs.getwriter('utf-8')(sys.stdout))
 
     elif args.output != '-':
         # write to filename
-        with open(args.output, 'w') as op:
+        with io.open(args.output, 'w', encoding='utf-8') as op:
             writer.write(notebook, op)
 
 
