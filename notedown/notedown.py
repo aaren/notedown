@@ -558,18 +558,18 @@ class Knitr(object):
 
         options are passed verbatim to knitr:knit running in Rscript.
         """
-        rcmd = ('Rscript -e '
-                '\'sink("/dev/null");'
-                'library(knitr);'
-                'opts_knit$set({opts_knit});'
-                'opts_chunk$set({opts_chunk});'
-                'knit("{input}", output="{output}")\' ')
+        script = ('sink("/dev/null");'
+                  'library(knitr);'
+                  'opts_knit$set({opts_knit});'
+                  'opts_chunk$set({opts_chunk});'
+                  'knit("{input}", output="{output}")')
 
-        cmd = rcmd.format(input=fin, output=fout,
-                          opts_knit=opts_knit, opts_chunk=opts_chunk)
+        rcmd = ('Rscript', '-e',
+                script.format(input=fin, output=fout,
+                              opts_knit=opts_knit, opts_chunk=opts_chunk)
+                )
 
-        p = subprocess.Popen(cmd,
-                             shell=True,  # Rscript needs the shell
+        p = subprocess.Popen(rcmd,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
