@@ -1,10 +1,14 @@
 from __future__ import absolute_import
+
 import re
 import os
 import json
 import tempfile
 import subprocess
 
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 import IPython.nbformat.v4.nbbase as nbbase
 import IPython.nbformat.v4 as v4
@@ -19,9 +23,6 @@ from IPython.utils.py3compat import unicode_type
 from IPython.nbconvert import MarkdownExporter
 
 from pandocattributes import PandocAttributes
-from six.moves import map
-from six.moves import range
-from six.moves import zip
 
 
 languages = ['python', 'r', 'ruby', 'bash']
