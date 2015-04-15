@@ -5,6 +5,7 @@ import os
 import json
 import tempfile
 import subprocess
+import io
 
 from six.moves import map
 from six.moves import range
@@ -371,7 +372,7 @@ class MarkdownWriter(NotebookWriter):
         tmp = tempfile.NamedTemporaryFile(dir='./', mode='w+')
         tmp_path = os.path.relpath(tmp.name)
 
-        with open(template_file) as orig:
+        with io.open(template_file, encoding='utf-8') as orig:
             tmp.file.write(orig.read())
             tmp.file.flush()
 
