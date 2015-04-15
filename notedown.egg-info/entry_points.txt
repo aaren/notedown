@@ -1,0 +1,3 @@
+[console_scripts]
+notedown = notedown:cli
+
