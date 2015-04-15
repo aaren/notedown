@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 import os
 import json
@@ -18,6 +19,9 @@ from IPython.utils.py3compat import unicode_type
 from IPython.nbconvert import MarkdownExporter
 
 from pandocattributes import PandocAttributes
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 
 languages = ['python', 'r', 'ruby', 'bash']
@@ -223,7 +227,7 @@ class MarkdownReader(NotebookReader):
         # based on the code block edges
         text_starts = [0] + [m.end() for m in code_matches]
         text_stops = [m.start() for m in code_matches] + [len(text)]
-        text_limits = zip(text_starts, text_stops)
+        text_limits = list(zip(text_starts, text_stops))
 
         # list of the groups from the code blocks
         code_blocks = [self.new_code_block(**m.groupdict())
@@ -233,12 +237,12 @@ class MarkdownReader(NotebookReader):
                        for i, j in text_limits]
 
         # remove indents
-        map(self.pre_process_code_block, code_blocks)
+        list(map(self.pre_process_code_block, code_blocks))
         # remove blank line at start and end of markdown
-        map(self.pre_process_text_block, text_blocks)
+        list(map(self.pre_process_text_block, text_blocks))
 
         # create a list of the right length
-        all_blocks = range(len(text_blocks) + len(code_blocks))
+        all_blocks = list(range(len(text_blocks) + len(code_blocks)))
 
         # NOTE: the behaviour here is a bit fragile in that we
         # assume that cells must alternate between code and
@@ -363,7 +367,7 @@ class MarkdownWriter(NotebookWriter):
         on a relative path and read from there after copying the
         template to it.
         """
-        tmp = tempfile.NamedTemporaryFile(dir='./')
+        tmp = tempfile.NamedTemporaryFile(dir='./', mode='w+')
         tmp_path = os.path.relpath(tmp.name)
 
         with open(template_file) as orig:
@@ -398,7 +402,7 @@ class MarkdownWriter(NotebookWriter):
         """Write the output data in resources returned by exporter
         to files.
         """
-        for filename, data in resources.get('outputs', {}).items():
+        for filename, data in list(resources.get('outputs', {}).items()):
             # Determine where to write the file to
             dest = os.path.join(self.output_dir, filename)
             path = os.path.dirname(dest)
@@ -411,7 +415,7 @@ class MarkdownWriter(NotebookWriter):
 
     # --- filter functions to be used in the output template --- #
     def string2json(self, string):
-        """Convert json into it's string representation.
+        """Convert json into its string representation.
         Used for writing outputs to markdown."""
         kwargs = {
             'cls': BytesEncoder,  # use the IPython bytes encoder
@@ -496,7 +500,7 @@ class MarkdownWriter(NotebookWriter):
             'application/javascript': 'html',
             'image/svg+xml': 'svg',
         }
-        inverse_map = {v: k for k, v in MIME_MAP.items()}
+        inverse_map = {v: k for k, v in list(MIME_MAP.items())}
         mime_type = inverse_map[data_type]
         uri = r"data:{mime};base64,{data}"
         return uri.format(mime=mime_type,
@@ -509,7 +513,7 @@ class CodeMagician(object):
 
     # convert to many to one lookup (found as self.aliases)
     aliases = {}
-    for k, v in many_aliases.items():
+    for k, v in list(many_aliases.items()):
         for key in k:
             aliases[key] = v
 
@@ -530,8 +534,8 @@ class Knitr(object):
         into markdown, returning a file object.
         """
         # use temporary files at both ends to allow stdin / stdout
-        tmp_in = tempfile.NamedTemporaryFile()
-        tmp_out = tempfile.NamedTemporaryFile()
+        tmp_in = tempfile.NamedTemporaryFile(mode='w+')
+        tmp_out = tempfile.NamedTemporaryFile(mode='w+')
 
         tmp_in.file.write(input_file.read())
         tmp_in.file.flush()

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 
 import nose.tools as nt
@@ -185,7 +187,7 @@ def test_notedown():
     from difflib import ndiff
     notebook = create_json_notebook(sample_markdown)
     diff = ndiff(sample_notebook.splitlines(1), notebook.splitlines(1))
-    print '\n'.join(diff)
+    print('\n'.join(diff))
     nt.assert_multi_line_equal(create_json_notebook(sample_markdown),
                                sample_notebook)
 
@@ -214,10 +216,10 @@ def test_parse_gfm():
     code_cells = separate_code_cells(all_cells)
     markdown_cells = separate_markdown_cells(all_cells)
 
-    print "out: ", code_cells
-    print "ref: ", simple_code_cells
-    print "out: ", markdown_cells
-    print "ref: ", simple_markdown_cells
+    print("out: ", code_cells)
+    print("ref: ", simple_code_cells)
+    print("out: ", markdown_cells)
+    print("ref: ", simple_markdown_cells)
     assert(code_cells == simple_code_cells)
     assert(markdown_cells == simple_markdown_cells)
 
@@ -240,10 +242,10 @@ def test_parse_indented():
     code_cells = separate_code_cells(all_cells)
     markdown_cells = separate_markdown_cells(all_cells)
 
-    print "out: ", code_cells
-    print "ref: ", simple_code_cells
-    print "out: ", markdown_cells
-    print "ref: ", simple_markdown_cells
+    print("out: ", code_cells)
+    print("ref: ", simple_code_cells)
+    print("out: ", markdown_cells)
+    print("ref: ", simple_markdown_cells)
     assert(code_cells == simple_code_cells)
     assert(markdown_cells == simple_markdown_cells)
 
@@ -285,16 +287,16 @@ def test_pre_process_text():
     block['content'] = ref
     notedown.MarkdownReader.pre_process_text_block(block)
     expected = "text"
-    print "---"
-    print "in: "
-    print ref
-    print "---"
-    print "out: "
-    print block['content']
-    print "---"
-    print "expected: "
-    print expected
-    print "---"
+    print("---")
+    print("in: ")
+    print(ref)
+    print("---")
+    print("out: ")
+    print(block['content'])
+    print("---")
+    print("expected: ")
+    print(expected)
+    print("---")
     assert(block['content'] == expected)
 
 
