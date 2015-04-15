@@ -529,6 +529,31 @@ class CodeMagician(object):
 
 
 class Knitr(object):
+    class KnitrError(Exception):
+        pass
+
+    def __init__(self):
+        # raise exception if R or knitr not installed
+        cmd = ['Rscript', '-e', 'require(knitr)']
+
+        try:
+            p = subprocess.Popen(cmd,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+        except OSError:
+            message = "Rscript was not found on your path."
+            raise self.KnitrError(message)
+
+        stdout, stderr = p.communicate()
+
+        stderr = stderr.decode()  # cast to unicode (python 3 compatible)
+
+        if 'Warning' in stderr:
+            message = ("Could not load knitr (needs manual installation).\n\n"
+                       "$ {cmd}\n"
+                       "{error}").format(cmd=' '.join(cmd), error=stderr)
+            raise self.KnitrError(message)
+
     def knit(self, input_file, opts_chunk='eval=FALSE'):
         """Use Knitr to convert the r-markdown input_file
         into markdown, returning a file object.
