@@ -6,10 +6,10 @@ import sys
 import argparse
 import pkg_resources
 import io
-import codecs
 
 import IPython.nbformat as nbformat
 from IPython.nbconvert.preprocessors.execute import ExecutePreprocessor
+from IPython.utils.io import unicode_std_stream
 
 from .notedown import (MarkdownReader,
                        MarkdownWriter,
@@ -262,7 +262,7 @@ def cli():
 
     elif args.output == '-':
         # write stdout
-        writer.write(notebook, codecs.getwriter('utf-8')(sys.stdout))
+        writer.write(notebook, unicode_std_stream('stdout'))
 
     elif args.output != '-':
         # write to filename
