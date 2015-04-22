@@ -8,12 +8,13 @@ import pkg_resources
 import io
 
 import IPython.nbformat as nbformat
-from IPython.nbconvert.preprocessors.execute import ExecutePreprocessor
 from IPython.utils.io import unicode_std_stream
 
 from .notedown import (MarkdownReader,
                        MarkdownWriter,
-                       Knitr)
+                       Knitr,
+                       run,
+                       strip)
 
 
 try:
@@ -28,20 +29,6 @@ markdown_template \
 markdown_figure_template \
     = pkg_resources.resource_filename('notedown',
                                       'templates/markdown_outputs.tpl')
-
-
-def strip(notebook):
-    """Remove outputs from a notebook."""
-    for cell in notebook.cells:
-        if cell.cell_type == 'code':
-            cell.outputs = []
-            cell.execution_count = None
-
-
-def run(notebook):
-    executor = ExecutePreprocessor()
-    notebook, resources = executor.preprocess(notebook, resources={})
-
 
 examples = """
 Example usage of notedown
@@ -91,7 +78,22 @@ the rmagic extension to execute the code blocks:
 """
 
 
-def cli_parser():
+def ftdetect(filename):
+    """Determine if filename is markdown or notebook,
+    based on the file extension.
+    """
+    _, extension = os.path.splitext(filename)
+    md_exts = ['.md', '.markdown', '.mkd', '.mdown', '.mkdn', '.Rmd']
+    nb_exts = ['.ipynb']
+    if extension in md_exts:
+        return 'markdown'
+    elif extension in nb_exts:
+        return 'notebook'
+    else:
+        return None
+
+
+def command_line_parser():
     """Create parser for command line usage."""
     description = "Create an IPython notebook from markdown."
     example_use = "Example:  notedown some_markdown.md > new_notebook.ipynb"
@@ -172,22 +174,19 @@ def cli_parser():
     return parser
 
 
-def cli():
-    parser = cli_parser()
-    args = parser.parse_args()
-
+def main(args, help=''):
     if args.version:
         print(__version__)
-        exit()
+        sys.exit()
 
     if args.examples:
         print(examples)
-        exit()
+        sys.exit()
 
     # if no stdin and no input file
     if args.input_file == '-' and sys.stdin.isatty():
-        parser.print_help()
-        exit()
+        sys.stdout.write(help)
+        sys.exit()
 
     elif args.input_file == '-':
         input_file = sys.stdin
@@ -196,7 +195,7 @@ def cli():
         input_file = io.open(args.input_file, 'r', encoding='utf-8')
 
     else:
-        exit('malformed input')
+        sys.exit('malformed input')
 
     # pre-process markdown by using knitr on it
     if args.knit:
@@ -258,7 +257,7 @@ def cli():
 
     elif not args.output and args.input_file == '-':
         # overwrite error (input is stdin)
-        exit('Cannot overwrite with no input file given.')
+        sys.exit('Cannot overwrite with no input file given.')
 
     elif args.output == '-':
         # write stdout
@@ -270,20 +269,11 @@ def cli():
             writer.write(notebook, op)
 
 
-def ftdetect(filename):
-    """Determine if filename is markdown or notebook,
-    based on the file extension.
-    """
-    _, extension = os.path.splitext(filename)
-    md_exts = ['.md', '.markdown', '.mkd', '.mdown', '.mkdn', '.Rmd']
-    nb_exts = ['.ipynb']
-    if extension in md_exts:
-        return 'markdown'
-    elif extension in nb_exts:
-        return 'notebook'
-    else:
-        return None
+def app():
+    parser = command_line_parser()
+    args = parser.parse_args()
+    main(args, help=parser.format_help())
 
 
 if __name__ == '__main__':
-    cli()
+    app()

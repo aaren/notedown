@@ -18,6 +18,8 @@ from IPython.nbformat.v4.rwbase import NotebookReader
 from IPython.nbformat.v4.rwbase import NotebookWriter
 from IPython.nbformat.v4.nbjson import BytesEncoder
 
+from IPython.nbconvert.preprocessors.execute import ExecutePreprocessor
+
 from IPython.utils import py3compat
 from IPython.utils.py3compat import unicode_type
 
@@ -25,8 +27,20 @@ from IPython.nbconvert import MarkdownExporter
 
 from pandocattributes import PandocAttributes
 
-
 languages = ['python', 'r', 'ruby', 'bash']
+
+
+def strip(notebook):
+    """Remove outputs from a notebook."""
+    for cell in notebook.cells:
+        if cell.cell_type == 'code':
+            cell.outputs = []
+            cell.execution_count = None
+
+
+def run(notebook):
+    executor = ExecutePreprocessor()
+    notebook, resources = executor.preprocess(notebook, resources={})
 
 
 # you can think of notedown as a document converter that uses the

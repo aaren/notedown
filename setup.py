@@ -24,7 +24,7 @@ setup(
     license='BSD 2-Clause',
     url='http://github.com/aaren/notedown',
     install_requires=['ipython[nbconvert] >= 3.0', 'pandoc-attributes', 'six'],
-    entry_points={'console_scripts': ['notedown = notedown:cli', ]},
+    entry_points={'console_scripts': ['notedown = notedown.main:app', ]},
     package_dir={'notedown': 'notedown'},
     package_data={'notedown': ['templates/markdown.tpl']},
     include_package_data=True,
