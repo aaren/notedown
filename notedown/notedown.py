@@ -286,7 +286,11 @@ class MarkdownReader(NotebookReader):
         if not attr.is_empty:
             code_cell.metadata \
                 = nbbase.NotebookNode({'attributes': attr.to_dict()})
-            code_cell.execution_count = attr.kvs.get('n')
+            execution_count = attr.kvs.get('n')
+            if not execution_count:
+                code_cell.execution_count = None
+            else:
+                code_cell.execution_count = int(execution_count)
 
         return code_cell
 
