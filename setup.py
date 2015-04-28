@@ -34,6 +34,7 @@ setup(
                       'six'],
     entry_points={'console_scripts': ['notedown = notedown.main:app', ]},
     package_dir={'notedown': 'notedown'},
-    package_data={'notedown': ['templates/markdown.tpl']},
+    package_data={'notedown': ['templates/markdown.tpl',
+                               'templates/markdown_outputs.tpl']},
     include_package_data=True,
 )
