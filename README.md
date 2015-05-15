@@ -56,6 +56,17 @@ Strip the output cells from markdown:
 
     notedown notebook.md --run > executed_notebook.ipynb
 
+### Editing in the browser *(new!)*
+
+You can configure IPython to seamlessly use markdown as its storage
+format. Add the following to `ipython_notebook_config.py` in your
+ipython profile (probably `~/.ipython/profile_default`):
+
+    c.NotebookApp.contents_manager_class = 'notedown.NotedownContentsManager'
+
+Now you can edit your markdown files in the browser, execute code,
+create plots - all stored in markdown!
+
 ### R-markdown
 
 You can use `notedown` to convert r-markdown as well. We just need
@@ -112,6 +123,9 @@ giving a different argument to `--match`:
 
 ### This isn't very interactive!
 
+Try editing the markdown in the IPython Notebook using the
+`NotedownContentsManager` (see above).
+
 You can get an interactive ipython session in vim by using
 [vim-ipython], which allows you to connect to a running ipython
 kernel. You can send code from vim to ipython and get code
@@ -153,5 +167,7 @@ The `--render` flag forces the output format to markdown.
 
 ### TODO
 
+- [x] Python 3 support
+- [x] unicode support
 - [x] IPython 3 support
 - [ ] Allow kernel specification
