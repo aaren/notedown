@@ -18,7 +18,7 @@ unknown type  {{ cell.type }}
 
 
 {% block outputs %}
-<div class='outputs' n={{ cell.prompt_number }}>
+<div class='outputs' n={{ cell.execution_count }}>
 {{ super () }}
 </div>
 {% endblock outputs %}
