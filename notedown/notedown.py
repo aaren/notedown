@@ -92,7 +92,8 @@ class MarkdownReader(NotebookReader):
     |\n[ \t]*)                 # or another blank line
     """
 
-    def __init__(self, code_regex=None, precode='', magic=True, match='all'):
+    def __init__(self, code_regex=None, precode='', magic=True,
+                 match='all', caption_comments=False):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -112,6 +113,9 @@ class MarkdownReader(NotebookReader):
 
             match      - one of 'all', 'fenced' or 'strict' or a specific
                          language name
+
+            caption_comments - whether to derive a caption and id from the
+                               cell contents
         """
         if not code_regex:
             self.code_regex = r"({}|{})".format(self.fenced_regex,
@@ -131,6 +135,8 @@ class MarkdownReader(NotebookReader):
         self.magic = magic
 
         self.match = match
+
+        self.caption_comments = caption_comments
 
     def new_code_block(self, **kwargs):
         """Create a new code block."""
@@ -209,6 +215,13 @@ class MarkdownReader(NotebookReader):
             attr.classes.remove('input')
         else:
             block['IO'] = 'input'
+
+        if self.caption_comments:
+            id, caption = get_caption_comments(block['content'])
+            if id:
+                attr.id = id
+            if caption:
+                attr['caption'] = caption
 
         block['language'] = language
         block['attributes'] = attr
@@ -618,3 +631,37 @@ class Knitr(object):
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
+
+
+def get_caption_comments(content):
+    """Retrieve an id and a caption from a code cell.
+
+    If the code cell content begins with a commented
+    block that looks like
+
+    ## fig:id
+    # multi-line or single-line
+    # caption
+
+    then the 'fig:id' and the caption will be returned.
+    The '#' are stripped.
+    """
+
+    if not content.startswith('## fig:'):
+        return None, None
+
+    content = content.splitlines()
+
+    id = content[0].strip('## ')
+
+    caption = []
+    for line in content[1:]:
+        if not line.startswith('# '):
+            break
+        else:
+            caption.append(line.lstrip('# ').rstrip())
+
+    # add " around the caption. TODO: consider doing this upstream
+    # in pandoc-attributes
+    caption = '"' + ' '.join(caption) + '"'
+    return id, caption

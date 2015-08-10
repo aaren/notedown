@@ -217,7 +217,8 @@ def main(args, help=''):
     readers = {'notebook': nbformat,
                'markdown': MarkdownReader(precode='\n'.join(args.precode),
                                           magic=args.magic,
-                                          match=args.match)
+                                          match=args.match,
+                                          caption_comments=args.render)
                }
 
     writers = {'notebook': nbformat,
