@@ -217,6 +217,8 @@ class MarkdownReader(NotebookReader):
             block['IO'] = 'input'
 
         if self.caption_comments:
+            # override attributes id and caption with those set in
+            # comments, if they exist
             id, caption = get_caption_comments(block['content'])
             if id:
                 attr.id = id
