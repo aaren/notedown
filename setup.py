@@ -24,7 +24,7 @@ setup(
     license='BSD 2-Clause',
     url='http://github.com/aaren/notedown',
     # conda gets confused by ipython[nbconvert] so be explicit..
-    install_requires=['ipython >= 3.0',
+    install_requires=['ipython >= 3.0, < 4.0',
                       'jinja2',
                       'mistune',
                       'pygments',
