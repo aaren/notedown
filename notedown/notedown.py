@@ -659,7 +659,7 @@ def get_caption_comments(content):
 
     caption = []
     for line in content[1:]:
-        if not line.startswith('# '):
+        if not line.startswith('# ') or line.startswith('##'):
             break
         else:
             caption.append(line.lstrip('# ').rstrip())
