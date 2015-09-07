@@ -8,9 +8,11 @@ import pkg_resources
 import io
 
 import IPython.nbformat as nbformat
-ipy_version_major = None
+
 try:
   ipy_version_major = int(IPython.__version__.split('.')[0])
+except:
+  ipy_version_major = None  
 
 if ipy_version_major is None or ipy_version_major == 3:
     from IPython.utils.io import unicode_std_stream
