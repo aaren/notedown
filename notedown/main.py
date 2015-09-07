@@ -8,7 +8,14 @@ import pkg_resources
 import io
 
 import IPython.nbformat as nbformat
-from IPython.utils.io import unicode_std_stream
+ipy_version_major = None
+try:
+  ipy_version_major = int(IPython.__version__.split('.')[0])
+
+if ipy_version_major is None or ipy_version_major == 3:
+    from IPython.utils.io import unicode_std_stream
+else:
+    from nbconvert.utils.io import unicode_std_stream
 
 from .notedown import (MarkdownReader,
                        MarkdownWriter,
