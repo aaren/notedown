@@ -173,6 +173,23 @@ b = 2
 ```
 """
 
+attribute_markdown = u"""Attribute test
+
+```lang
+code1
+```
+
+```{.attr}
+code2
+```
+
+```  {.attr}
+code3
+```
+"""
+
+ref_attributes = ['lang', r'{.attr}', r'{.attr}']
+
 
 def create_json_notebook(markdown):
     reader = notedown.MarkdownReader()
@@ -278,6 +295,14 @@ def test_format_agnostic():
 
     assert(fenced_code_cells == indented_code_cells)
     assert(fenced_markdown_cells == indented_markdown_cells)
+
+
+def test_attributes():
+    """Are code block attributes correctly parsed?"""
+    cells = parse_cells(attribute_markdown)
+    attributes = [cell['attributes'] for cell in cells if cell['type'] == 'code']
+    for attr, ref in zip(attributes, ref_attributes):
+        assert attr == ref
 
 
 def test_pre_process_text():

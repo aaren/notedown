@@ -72,9 +72,10 @@ class MarkdownReader(NotebookReader):
     fenced_regex = r"""
     ^(?P<raw>
     (?P<fence>`{3,}|~{3,})  # a line starting with a fence of 3 or more ` or ~
-    (?P<attributes>.*)      # followed by the group 'attributes'
-    \n                      # followed by a newline
-    (?P<content>            # start a group 'content'
+    [ \t]*                  # followed by any amount of whitespace,
+    (?P<attributes>.*)      # the group 'attributes',
+    \n                      # a newline,
+    (?P<content>            # the 'content' group,
     [\s\S]*?)               # that includes anything
     \n(?P=fence)$\n)        # up until the same fence that we started with
     """
