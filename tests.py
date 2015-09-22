@@ -192,7 +192,7 @@ def test_notedown():
                                sample_notebook)
 
 
-def parse_cells(text, regex):
+def parse_cells(text, regex=None):
     reader = notedown.MarkdownReader(code_regex=regex)
     return reader.parse_blocks(text)
 
