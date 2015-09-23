@@ -6,6 +6,7 @@ import sys
 import argparse
 import pkg_resources
 import io
+import logging
 
 import IPython.nbformat as nbformat
 from IPython.utils.io import unicode_std_stream
@@ -170,11 +171,17 @@ def command_line_parser():
     parser.add_argument('--version',
                         help=('print version number'),
                         action='store_true')
+    parser.add_argument('--debug',
+                        help=('show logging output'),
+                        action='store_true')
 
     return parser
 
 
 def main(args, help=''):
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
     if args.version:
         print(__version__)
         sys.exit()
