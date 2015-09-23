@@ -6,7 +6,7 @@ import tempfile
 
 import nose.tools as nt
 
-import IPython.nbformat as nbformat
+import nbformat
 
 import notedown
 
