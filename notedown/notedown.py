@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 
-import re
-import os
-import json
-import tempfile
-import subprocess
 import io
+import json
+import logging
+import os
+import re
+import subprocess
+import tempfile
 
 from six.moves import map
 from six.moves import range
@@ -23,7 +24,7 @@ from IPython.nbconvert.preprocessors.execute import ExecutePreprocessor
 from IPython.utils import py3compat
 from IPython.utils.py3compat import unicode_type
 
-from IPython.nbconvert import MarkdownExporter
+from IPython.nbconvert import TemplateExporter
 
 from pandocattributes import PandocAttributes
 
@@ -378,23 +379,39 @@ class MarkdownWriter(NotebookWriter):
         """template_file - location of jinja template to use for export
         strip_outputs - whether to remove output cells from the output
         """
-        self.exporter = MarkdownExporter()
-        self.exporter.register_filter('string2json', self.string2json)
-        self.exporter.register_filter('create_input_codeblock',
-                                      self.create_input_codeblock)
-        self.exporter.register_filter('create_output_codeblock',
-                                      self.create_output_codeblock)
-        self.exporter.register_filter('create_output_block',
-                                      self.create_output_block)
-        self.exporter.register_filter('create_attributes',
-                                      self.create_attributes)
-        self.exporter.register_filter('dequote', self.dequote)
-        self.exporter.register_filter('data2uri', self.data2uri)
-        self.load_template(template_file)
-        self.strip_outputs = strip_outputs
+        filters = [
+            ('string2json', self.string2json),
+            ('create_input_codeblock', self.create_input_codeblock),
+            ('create_output_codeblock', self.create_output_codeblock),
+            ('create_output_block', self.create_output_block),
+            ('create_attributes', self.create_attributes),
+            ('dequote', self.dequote),
+            ('data2uri', self.data2uri)
+        ]
 
+        self.exporter = TemplateExporter()
+        self.exporter.output_mimetype = 'text/markdown'
+        self.exporter.file_extension = '.md'
+
+        # have to register filters before setting template file for
+        # ipython 3 compatibility
+        for name, filter in filters:
+            self.exporter.register_filter(name, filter)
+
+        self.load_template(template_file)
+
+        logging.debug("Creating MarkdownWriter")
+        logging.debug(("MarkdownWriter: template_file = %s"
+                       % template_file))
+        logging.debug(("MarkdownWriter.exporter.template_file = %s"
+                       % self.exporter.template_file))
+        logging.debug(("MarkdownWriter.exporter.filters = %s"
+                       % self.exporter.environment.filters.keys()))
+
+        self.strip_outputs = strip_outputs
         self.write_outputs = write_outputs
         self.output_dir = './figures/'
+
 
     def load_template(self, template_file):
         """IPython cannot load a template from an absolute path. If
@@ -411,7 +428,6 @@ class MarkdownWriter(NotebookWriter):
             tmp.file.flush()
 
         self.exporter.template_file = tmp_path
-        self.exporter._load_template()
         tmp.close()
 
     def write_from_json(self, notebook_json):
