@@ -6,9 +6,9 @@ import tempfile
 
 import nose.tools as nt
 
-import nbformat
-
 import notedown
+from notedown import nbformat
+
 
 simple_backtick = """
 ```
