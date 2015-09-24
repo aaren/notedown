@@ -58,14 +58,19 @@ Strip the output cells from markdown:
 
 ### Editing in the browser *(new!)*
 
-You can configure IPython to seamlessly use markdown as its storage
-format. Add the following to `ipython_notebook_config.py` in your
-ipython profile (probably `~/.ipython/profile_default`):
+You can configure IPython / Jupyter to seamlessly use markdown as its storage
+format. Add the following to your config file:
 
     c.NotebookApp.contents_manager_class = 'notedown.NotedownContentsManager'
 
+
 Now you can edit your markdown files in the browser, execute code,
 create plots - all stored in markdown!
+
+For Jupyter, your config file is `jupyter_notebook_config.py` in `~/.jupyter`.
+For IPython your config is `ipython_notebook_config.py` in your ipython
+profile (probably `~/.ipython/profile_default`):
+
 
 ### R-markdown
 
