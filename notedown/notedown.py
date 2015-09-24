@@ -411,7 +411,6 @@ class MarkdownWriter(NotebookWriter):
             tmp.file.flush()
 
         self.exporter.template_file = tmp_path
-        self.exporter._load_template()
         tmp.close()
 
     def write_from_json(self, notebook_json):
