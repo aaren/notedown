@@ -364,11 +364,11 @@ def test_template_load_nonchild():
 
     IPython 3 requires a relative path in a child directory.
     """
-    temp = tempfile.NamedTemporaryFile(delete=False)
+    temp = tempfile.NamedTemporaryFile(delete=False, mode='w+t')
 
     template_path = 'notedown/templates/markdown.tpl'
 
-    with open(template_path) as source:
+    with open(template_path, 'rt') as source:
         temp.write(source.read())
 
     temp.close()
@@ -377,7 +377,7 @@ def test_template_load_nonchild():
     import jinja2
     assert(isinstance(writer.exporter.template, jinja2.Template))
 
-    temp.unlink(temp.name)
+    os.remove(temp.name)
 
 
 def test_markdown_markdown():
