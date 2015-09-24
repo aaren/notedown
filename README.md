@@ -1,4 +1,4 @@
-*Python 2/3 and IPython 3 compatible!*
+*Python 2/3 and IPython 4 / Jupyter compatible!*
 
 Convert IPython Notebooks to markdown (and back)
 ------------------------------------------------
