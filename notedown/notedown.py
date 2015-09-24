@@ -599,7 +599,8 @@ class Knitr(object):
 
         stdout, stderr = p.communicate()
 
-        stderr = stderr.decode()  # cast to unicode (python 3 compatible)
+        # cast to unicode for Python 3 compatibility
+        stderr = stderr.decode('utf8')
 
         if 'Warning' in stderr:
             message = ("Could not load knitr (needs manual installation).\n\n"
