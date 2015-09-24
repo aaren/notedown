@@ -130,7 +130,7 @@ def command_line_parser():
                         help=("format to convert to, defaults to notebook "
                               "or file extension. Setting --render forces "
                               "this to 'markdown'"))
-    parser.add_argument('--run',
+    parser.add_argument('--run', '--execute',
                         action='store_true',
                         help=("run the notebook, executing the "
                               "contents of each cell"))
