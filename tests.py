@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
+
 import os
+import tempfile
 
 import nose.tools as nt
 
@@ -346,14 +348,36 @@ def test_roundtrip():
     nt.assert_multi_line_equal(roundtrip_markdown, markdown)
 
 
-def test_template_load():
-    """MarkdownWriter should be able to load a template from an
-    absolute path. IPython requires a relative path.
+def test_template_load_absolute():
+    """Load a template from an absolute path.
+
+    IPython 3 requires a relative path in a child directory.
     """
     template_abspath = os.path.abspath('notedown/templates/markdown.tpl')
     writer = notedown.MarkdownWriter(template_file=template_abspath)
     import jinja2
     assert(isinstance(writer.exporter.template, jinja2.Template))
+
+
+def test_template_load_nonchild():
+    """Load a template from a non-child directory.
+
+    IPython 3 requires a relative path in a child directory.
+    """
+    temp = tempfile.NamedTemporaryFile(delete=False)
+
+    template_path = 'notedown/templates/markdown.tpl'
+
+    with open(template_path) as source:
+        temp.write(source.read())
+
+    temp.close()
+
+    writer = notedown.MarkdownWriter(template_file=temp.name)
+    import jinja2
+    assert(isinstance(writer.exporter.template, jinja2.Template))
+
+    temp.unlink(temp.name)
 
 
 def test_markdown_markdown():
