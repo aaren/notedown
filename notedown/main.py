@@ -134,6 +134,10 @@ def command_line_parser():
                         action='store_true',
                         help=("run the notebook, executing the "
                               "contents of each cell"))
+    parser.add_argument('--timeout',
+                        default=30,
+                        type=int,
+                        help=("set the cell execution timeout (in seconds)"))
     parser.add_argument('--strip',
                         action='store_true',
                         dest='strip_outputs',
@@ -251,7 +255,7 @@ def main(args, help=''):
         notebook = reader.read(ip, as_version=4)
 
     if args.run:
-        run(notebook)
+        run(notebook, timeout=args.timeout)
 
     if args.strip_outputs:
         strip(notebook)

@@ -52,8 +52,8 @@ def strip(notebook):
             cell.execution_count = None
 
 
-def run(notebook):
-    executor = ExecutePreprocessor()
+def run(notebook, timeout=30):
+    executor = ExecutePreprocessor(timeout=timeout)
     notebook, resources = executor.preprocess(notebook, resources={})
 
 
