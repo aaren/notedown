@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import io
 import json
 import logging
 import os
@@ -389,7 +388,13 @@ class MarkdownWriter(NotebookWriter):
             ('data2uri', self.data2uri)
         ]
 
-        self.exporter = TemplateExporter()
+        import jinja2
+
+        # need to create a jinja loader that looks in whatever
+        # arbitrary path we have passed in for the template_file
+        direct_loader = jinja2.FileSystemLoader(os.path.dirname(template_file))
+
+        self.exporter = TemplateExporter(extra_loaders=[direct_loader])
         self.exporter.output_mimetype = 'text/markdown'
         self.exporter.file_extension = '.md'
 
@@ -398,7 +403,7 @@ class MarkdownWriter(NotebookWriter):
         for name, filter in filters:
             self.exporter.register_filter(name, filter)
 
-        self.load_template(template_file)
+        self.exporter.template_file = os.path.basename(template_file)
 
         logging.debug("Creating MarkdownWriter")
         logging.debug(("MarkdownWriter: template_file = %s"
@@ -411,24 +416,6 @@ class MarkdownWriter(NotebookWriter):
         self.strip_outputs = strip_outputs
         self.write_outputs = write_outputs
         self.output_dir = './figures/'
-
-
-    def load_template(self, template_file):
-        """IPython cannot load a template from an absolute path. If
-        we want to include templates in our package they will be
-        placed on an absolute path. Here we create a temporary file
-        on a relative path and read from there after copying the
-        template to it.
-        """
-        tmp = tempfile.NamedTemporaryFile(dir='./', mode='w+')
-        tmp_path = os.path.relpath(tmp.name)
-
-        with io.open(template_file, encoding='utf-8') as orig:
-            tmp.file.write(orig.read())
-            tmp.file.flush()
-
-        self.exporter.template_file = tmp_path
-        tmp.close()
 
     def write_from_json(self, notebook_json):
         notebook = v4.reads_json(notebook_json)
