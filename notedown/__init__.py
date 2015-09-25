@@ -4,14 +4,8 @@ import os
 
 from tornado import web
 
-try:
-    from notebook.services.contents.filemanager import FileContentsManager
-    import nbformat
-
-except ImportError:
-    from IPython.html.services.contents.filemanager import FileContentsManager
-    import IPython.nbformat as nbformat
-
+from notebook.services.contents.filemanager import FileContentsManager
+import nbformat
 
 from .notedown import *
 from .main import ftdetect, markdown_template, __version__

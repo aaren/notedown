@@ -12,29 +12,16 @@ from six.moves import map
 from six.moves import range
 from six.moves import zip
 
-try:
-    import nbformat.v4.nbbase as nbbase
-    import nbformat.v4 as v4
+import nbformat.v4.nbbase as nbbase
+import nbformat.v4 as v4
 
-    from nbformat.v4.rwbase import NotebookReader
-    from nbformat.v4.rwbase import NotebookWriter
-    from nbformat.v4.nbjson import BytesEncoder
+from nbformat.v4.rwbase import NotebookReader
+from nbformat.v4.rwbase import NotebookWriter
+from nbformat.v4.nbjson import BytesEncoder
 
-    from nbconvert.preprocessors.execute import ExecutePreprocessor
+from nbconvert.preprocessors.execute import ExecutePreprocessor
 
-    from nbconvert import TemplateExporter
-
-except ImportError:
-    import IPython.nbformat.v4.nbbase as nbbase
-    import IPython.nbformat.v4 as v4
-
-    from IPython.nbformat.v4.rwbase import NotebookReader
-    from IPython.nbformat.v4.rwbase import NotebookWriter
-    from IPython.nbformat.v4.nbjson import BytesEncoder
-
-    from IPython.nbconvert.preprocessors.execute import ExecutePreprocessor
-
-    from IPython.nbconvert import TemplateExporter
+from nbconvert import TemplateExporter
 
 from pandocattributes import PandocAttributes
 

@@ -8,13 +8,8 @@ import pkg_resources
 import io
 import logging
 
-try:
-    import nbformat as nbformat
-    from nbconvert.utils.io import unicode_std_stream
-
-except ImportError:
-    import IPython.nbformat as nbformat
-    from IPython.nbconvert.utils.io import unicode_std_stream
+import nbformat as nbformat
+from nbconvert.utils.io import unicode_std_stream
 
 from .notedown import (MarkdownReader,
                        MarkdownWriter,
