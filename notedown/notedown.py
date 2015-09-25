@@ -5,9 +5,9 @@ import logging
 import os
 import re
 import subprocess
-import sys
 import tempfile
 
+from six import PY3
 from six.moves import map
 from six.moves import range
 from six.moves import zip
@@ -30,7 +30,7 @@ languages = ['python', 'r', 'ruby', 'bash']
 
 def cast_unicode(s, encoding='utf-8'):
     """Python 2/3 compatibility function derived from IPython py3compat."""
-    if isinstance(s, bytes) and sys.version_info[0] < 3:
+    if isinstance(s, bytes) and not PY3:
         return s.decode(encoding, "replace")
     return s
 
