@@ -388,7 +388,7 @@ class MarkdownReader(NotebookReader):
 class MarkdownWriter(NotebookWriter):
     """Write a notebook into markdown."""
     def __init__(self, template_file, strip_outputs=True,
-                 write_outputs=False):
+                 write_outputs=False, output_dir='./figures'):
         """template_file - location of jinja template to use for export
         strip_outputs - whether to remove output cells from the output
         """
@@ -429,7 +429,7 @@ class MarkdownWriter(NotebookWriter):
 
         self.strip_outputs = strip_outputs
         self.write_outputs = write_outputs
-        self.output_dir = './figures/'
+        self.output_dir = output_dir
 
     def write_from_json(self, notebook_json):
         notebook = v4.reads_json(notebook_json)
