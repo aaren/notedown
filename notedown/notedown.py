@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 import tempfile
 
 from six.moves import map
@@ -35,13 +36,16 @@ except ImportError:
 
     from IPython.nbconvert import TemplateExporter
 
-from IPython.utils import py3compat
-from IPython.utils.py3compat import unicode_type
-
-
 from pandocattributes import PandocAttributes
 
 languages = ['python', 'r', 'ruby', 'bash']
+
+
+def cast_unicode(s, encoding='utf-8'):
+    """Python 2/3 compatibility function derived from IPython py3compat."""
+    if isinstance(s, bytes) and sys.version_info[0] < 3:
+        return s.decode(encoding, "replace")
+    return s
 
 
 def strip(notebook):
@@ -445,11 +449,7 @@ class MarkdownWriter(NotebookWriter):
         # remove any blank lines added at start and end by template
         text = re.sub(r'\A\s*\n|^\s*\Z', '', body)
 
-        if not py3compat.PY3 and not isinstance(text, unicode_type):
-            # this branch is likely only taken for JSON on Python 2
-            text = py3compat.str_to_unicode(text)
-
-        return text
+        return cast_unicode(text, 'utf-8')
 
     def write_resources(self, resources):
         """Write the output data in resources returned by exporter
@@ -476,7 +476,7 @@ class MarkdownWriter(NotebookWriter):
             'sort_keys': True,
             'separators': (',', ': '),
         }
-        return py3compat.str_to_unicode(json.dumps(string, **kwargs), 'utf-8')
+        return cast_unicode(json.dumps(string, **kwargs), 'utf-8')
 
     def create_input_codeblock(self, cell):
         codeblock = ('{fence}{attributes}\n'
