@@ -79,6 +79,31 @@ the rmagic extension to execute the code blocks:
 """
 
 
+def convert(content, informat, outformat):
+    if os.path.exists(content):
+        with open(content) as f:
+            contents = f.read()
+    else:
+        contents = content
+
+    readers = {'notebook': nbformat,
+               'markdown': MarkdownReader(precode='',
+                                          magic=False,
+                                          match='fenced')
+               }
+
+    writers = {'notebook': nbformat,
+               'markdown': MarkdownWriter(markdown_template,
+                                          strip_outputs=False)
+               }
+
+    reader = readers[informat]
+    writer = writers[outformat]
+
+    notebook = reader.reads(contents, as_version=4)
+    return writer.writes(notebook)
+
+
 def ftdetect(filename):
     """Determine if filename is markdown or notebook,
     based on the file extension.
