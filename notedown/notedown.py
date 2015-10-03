@@ -369,8 +369,18 @@ class MarkdownReader(NotebookReader):
         blocks = [self.process_code_block(block) for block in all_blocks]
 
         cells = self.create_cells(blocks)
+        metadata = {}
 
-        nb = nbbase.new_notebook(cells=cells)
+        from jupyter_client import kernelspec
+        try:
+            ks = kernelspec.get_kernel_spec(self.kernel)
+            kd = ks.to_dict()
+            kd['name'] = self.kernel
+            metadata['kernelspec'] = kd
+        except kernelspec.NoSuchKernel:
+            pass
+
+        nb = nbbase.new_notebook(cells=cells, metadata=metadata)
 
         return nb
 
