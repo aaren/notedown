@@ -99,7 +99,7 @@ class MarkdownReader(NotebookReader):
     """
 
     def __init__(self, code_regex=None, precode='', magic=True,
-                 match='all', caption_comments=False):
+                 kernel='python', match='all', caption_comments=False):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -116,6 +116,8 @@ class MarkdownReader(NotebookReader):
             magic      - whether to use code cell language magic, e.g.
                          put '%bash' at start of cells that have language
                          'bash'
+
+            kernel     - language kernel to use (defaults to python)
 
             match      - one of 'all', 'fenced' or 'strict' or a specific
                          language name
@@ -139,6 +141,7 @@ class MarkdownReader(NotebookReader):
 
         self.precode = precode
         self.magic = magic
+        self.kernel = kernel
 
         self.match = match
 

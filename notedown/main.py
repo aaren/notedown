@@ -257,6 +257,7 @@ def main(args, help=''):
                'markdown': MarkdownReader(precode='\n'.join(args.precode),
                                           magic=args.magic,
                                           match=args.match,
+                                          kernel=args.kernel,
                                           caption_comments=args.render)
                }
 
