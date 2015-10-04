@@ -435,6 +435,8 @@ class MarkdownWriter(NotebookWriter):
         self.write_outputs = write_outputs
         self.output_dir = output_dir
 
+        self.langugage = 'python'
+
     def write_from_json(self, notebook_json):
         notebook = v4.reads_json(notebook_json)
         return self.write(notebook)
@@ -478,11 +480,12 @@ class MarkdownWriter(NotebookWriter):
         }
         return cast_unicode(json.dumps(string, **kwargs), 'utf-8')
 
-    def create_input_codeblock(self, cell):
+    def create_input_codeblock(self, cell, language=None):
         codeblock = ('{fence}{attributes}\n'
                      '{cell.source}\n'
                      '{fence}')
-        attrs = self.create_attributes(cell, cell_type='input')
+        attrs = self.create_attributes(cell, cell_type='input',
+                                       language=language)
         return codeblock.format(attributes=attrs, fence='```', cell=cell)
 
     def create_output_block(self, cell):
@@ -499,18 +502,20 @@ class MarkdownWriter(NotebookWriter):
                                 execution_count=cell.execution_count,
                                 contents=self.string2json(cell.outputs))
 
-    def create_attributes(self, cell, cell_type=None):
+    def create_attributes(self, cell, cell_type=None, language=None):
         """Turn the attribute dict into an attribute string
         for the code block.
         """
+        language = language or self.language
+
         if self.strip_outputs or not hasattr(cell, 'execution_count'):
-            return 'python'
+            return language
 
         attrs = cell.metadata.get('attributes')
         attr = PandocAttributes(attrs, 'dict')
 
-        if 'python' in attr.classes:
-            attr.classes.remove('python')
+        if language in attr.classes:
+            attr.classes.remove(language)
         if 'input' in attr.classes:
             attr.classes.remove('input')
 
@@ -521,8 +526,8 @@ class MarkdownWriter(NotebookWriter):
             return attr.to_html()
 
         elif cell_type == 'input':
-            # ensure python goes first so that github highlights it
-            attr.classes.insert(0, 'python')
+            # ensure language goes first so that github highlights it
+            attr.classes.insert(0, language)
             attr.classes.insert(1, 'input')
             if cell.execution_count:
                 attr.kvs['n'] = cell.execution_count
