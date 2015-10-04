@@ -437,11 +437,18 @@ class MarkdownWriter(NotebookWriter):
 
         self.langugage = 'python'
 
+    def init(self, notebook):
+        # TODO: this isn't reliable. Might need to look at
+        # language_info or create a look up between kernel names
+        # and language names.
+        self.language = notebook.metadata.kernelspec.language
+
     def write_from_json(self, notebook_json):
         notebook = v4.reads_json(notebook_json)
         return self.write(notebook)
 
     def writes(self, notebook):
+        self.init(notebook)
         body, resources = self.exporter.from_notebook_node(notebook)
         self.resources = resources
 
