@@ -175,5 +175,5 @@ The `--render` flag forces the output format to markdown.
 - [x] Python 3 support
 - [x] unicode support
 - [x] IPython 3 support
-- [ ] IPython 4 (Jupyter) support
+- [x] IPython 4 (Jupyter) support
 - [ ] Allow kernel specification
