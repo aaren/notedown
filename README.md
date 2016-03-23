@@ -117,7 +117,8 @@ giving a different argument to `--match`:
 - `--match=all`: convert all code blocks (the default)
 - `--match=fenced`: only convert fenced code blocks
 - `--match=language`: only convert fenced code blocks with
-  'language' as the syntax specifier.
+  'language' as the syntax specifier (or any member of the block
+  attributes)
 - `--match=strict`: only convert code blocks with Pandoc style
   attributes containing 'python' and 'input' as classes. i.e. code
   blocks must look like
