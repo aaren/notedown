@@ -25,7 +25,6 @@ setup(
     url='http://github.com/aaren/notedown',
     install_requires=['nbformat',
                       'nbconvert',
-                      'ipython',  # because of nbconvert
                       'pandoc-attributes',
                       'six'],
     entry_points={'console_scripts': ['notedown = notedown.main:app', ]},
