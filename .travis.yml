@@ -17,8 +17,12 @@ matrix:
     - python: 2.7
       env: PEP=true
 
+addons:
+  apt:
+    packages:
+    - r-base
+
 before_install:
-  - apt-get install r-base
   - Rscript -e "install.packages('knitr', dependencies=TRUE, repos='http://cran.rstudio.com')"
 
 install:
