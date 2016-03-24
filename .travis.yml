@@ -23,6 +23,8 @@ addons:
     - r-base
 
 before_install:
+  - mkdir -p ~/Rlib
+  - echo 'R_LIBS=~/Rlib' > ~/.Renviron
   - Rscript -e "install.packages('knitr', dependencies=TRUE, repos='http://cran.rstudio.com')"
 
 install:
