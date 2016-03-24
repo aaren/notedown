@@ -204,8 +204,8 @@ class MarkdownReader(NotebookReader):
         elif self.match == 'fenced':
             if block.get('indent'):
                 return self.new_text_block(content=('\n' +
-                                                    block['icontent']
-                                                    + '\n'))
+                                                    block['icontent'] +
+                                                    '\n'))
         elif self.match == 'strict':
             if 'input' not in attr.classes:
                 return self.new_text_block(content=block['raw'])
@@ -339,8 +339,9 @@ class MarkdownReader(NotebookReader):
                 code_cell = self.create_code_cell(block)
                 cells.append(code_cell)
 
-            elif (block['type'] == self.code and block['IO'] == 'output'
-                  and cells[-1].cell_type == 'code'):
+            elif (block['type'] == self.code and
+                  block['IO'] == 'output' and
+                  cells[-1].cell_type == 'code'):
                 cells[-1].outputs = self.create_outputs(block)
 
             elif block['type'] == self.markdown:

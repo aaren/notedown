@@ -25,7 +25,7 @@ class NotedownContentsManager(FileContentsManager):
 
     To use, add the following line to ipython_notebook_config.py:
 
-        c.NotebookApp.contents_manager_class = 'notedown.NotedownContentsManager'
+      c.NotebookApp.contents_manager_class = 'notedown.NotedownContentsManager'
 
     Now markdown notebooks can be opened and edited in the browser!
     """
@@ -36,8 +36,9 @@ class NotedownContentsManager(FileContentsManager):
                 if ftdetect(os_path) == 'notebook':
                     return nbformat.read(f, as_version=as_version)
                 elif ftdetect(os_path) == 'markdown':
-                    nbjson = convert(os_path, informat='markdown',
-                                              outformat='notebook')
+                    nbjson = convert(os_path,
+                                     informat='markdown',
+                                     outformat='notebook')
                     return nbformat.reads(nbjson, as_version=as_version)
             except Exception as e:
                 raise web.HTTPError(
@@ -52,8 +53,9 @@ class NotedownContentsManager(FileContentsManager):
                 nbformat.write(nb, f, version=nbformat.NO_CONVERT)
             elif ftdetect(os_path) == 'markdown':
                 nbjson = nbformat.writes(nb, version=nbformat.NO_CONVERT)
-                markdown = convert(nbjson, informat='notebook',
-                                           outformat='markdown')
+                markdown = convert(nbjson,
+                                   informat='notebook',
+                                   outformat='markdown')
                 f.write(markdown)
 
     def get(self, path, content=True, type=None, format=None):
@@ -89,7 +91,9 @@ class NotedownContentsManager(FileContentsManager):
         if os.path.isdir(os_path):
             if type not in (None, 'directory'):
                 raise web.HTTPError(400,
-                                u'%s is a directory, not a %s' % (path, type), reason='bad type')
+                                    u'%s is a directory, not a %s' % (path,
+                                                                      type),
+                                    reason='bad type')
             model = self._dir_model(path, content=content)
 
         elif type == 'notebook' or (type is None and path.endswith(extension)):
@@ -97,6 +101,7 @@ class NotedownContentsManager(FileContentsManager):
         else:
             if type == 'directory':
                 raise web.HTTPError(400,
-                                u'%s is not a directory' % path, reason='bad type')
+                                    u'%s is not a directory' % path,
+                                    reason='bad type')
             model = self._file_model(path, content=content, format=format)
         return model
