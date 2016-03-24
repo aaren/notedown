@@ -415,6 +415,23 @@ def test_R():
     nt.assert_multi_line_equal(nbjson, reference_nbjson)
 
 
+def test_match_fenced():
+    mr = notedown.MarkdownReader(match='fenced')
+    nb = mr.to_notebook(sample_markdown)
+
+    assert(nb.cells[1]['cell_type'] == 'code')
+    assert(nb.cells[3]['cell_type'] == 'markdown')
+
+
+def test_match_arbitrary():
+    mr = notedown.MarkdownReader(match='attr')
+    nb = mr.to_notebook(attribute_markdown)
+
+    assert(nb.cells[0]['cell_type'] == 'markdown')
+    assert(nb.cells[2]['cell_type'] == 'code')
+    assert(nb.cells[3]['cell_type'] == 'code')
+
+
 class TestCommandLine(object):
     @property
     def default_args(self):

@@ -1,8 +1,6 @@
 language: python
 
-dist: trusty
-
-sudo: required
+sudo: no
 
 python:
   - 2.7
@@ -22,7 +20,7 @@ matrix:
 addons:
   apt:
     sources:
-      - r-packages-trusty
+      - r-packages-precise
     packages:
       - r-base-dev
 

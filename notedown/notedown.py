@@ -193,24 +193,18 @@ class MarkdownReader(NotebookReader):
 
         attr = PandocAttributes(block['attributes'], 'markdown')
 
-        try:
-            language = set(attr.classes).intersection(languages).pop()
-            attr.classes.remove(language)
-        except KeyError:
-            language = None
-
         if self.match == 'all':
             pass
-        elif self.match == 'fenced':
-            if block.get('indent'):
-                return self.new_text_block(content=('\n' +
-                                                    block['icontent'] +
-                                                    '\n'))
-        elif self.match == 'strict':
-            if 'input' not in attr.classes:
-                return self.new_text_block(content=block['raw'])
 
-        elif self.match != language:
+        elif self.match == 'fenced' and block.get('indent'):
+            return self.new_text_block(content=('\n' +
+                                                block['icontent'] +
+                                                '\n'))
+
+        elif self.match == 'strict' and 'input' not in attr.classes:
+            return self.new_text_block(content=block['raw'])
+
+        elif self.match not in list(attr.classes) + ['fenced', 'strict']:
             return self.new_text_block(content=block['raw'])
 
         # set input / output status of cell
@@ -230,6 +224,15 @@ class MarkdownReader(NotebookReader):
                 attr.id = id
             if caption:
                 attr['caption'] = caption
+
+        try:
+            # determine the language as the first class that
+            # is in the block attributes and also in the list
+            # of languages
+            language = set(attr.classes).intersection(languages).pop()
+            attr.classes.remove(language)
+        except KeyError:
+            language = None
 
         block['language'] = language
         block['attributes'] = attr
