@@ -19,7 +19,7 @@ matrix:
 
 install:
   - pip install pep8
-  - python setup.py install
+  - pip install .
 
 script:
     - if $PEP; then pep8 notedown; fi
