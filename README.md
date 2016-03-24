@@ -1,4 +1,4 @@
-*Python 2/3 and IPython 4 / Jupyter compatible!*
+*Python 2/3 and IPython 4 / Jupyter compatible!* <a href='https://travis-ci.org/aaren/wavelets'> <img src='https://secure.travis-ci.org/aaren/wavelets.png?branch=master'></a>
 
 Convert IPython Notebooks to markdown (and back)
 ------------------------------------------------
