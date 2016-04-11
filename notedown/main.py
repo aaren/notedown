@@ -79,7 +79,7 @@ the rmagic extension to execute the code blocks:
 """
 
 
-def convert(content, informat, outformat):
+def convert(content, informat, outformat, strip_outputs=False):
     if os.path.exists(content):
         with open(content) as f:
             contents = f.read()
@@ -94,7 +94,7 @@ def convert(content, informat, outformat):
 
     writers = {'notebook': nbformat,
                'markdown': MarkdownWriter(markdown_template,
-                                          strip_outputs=False)
+                                          strip_outputs=strip_outputs)
                }
 
     reader = readers[informat]

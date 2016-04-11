@@ -29,6 +29,8 @@ class NotedownContentsManager(FileContentsManager):
 
     Now markdown notebooks can be opened and edited in the browser!
     """
+    strip_outputs = False
+
     def _read_notebook(self, os_path, as_version=4):
         """Read a notebook from an os path."""
         with self.open(os_path, 'r', encoding='utf-8') as f:
@@ -55,7 +57,8 @@ class NotedownContentsManager(FileContentsManager):
                 nbjson = nbformat.writes(nb, version=nbformat.NO_CONVERT)
                 markdown = convert(nbjson,
                                    informat='notebook',
-                                   outformat='markdown')
+                                   outformat='markdown',
+                                   strip_outputs=self.strip_outputs)
                 f.write(markdown)
 
     def get(self, path, content=True, type=None, format=None):
@@ -105,3 +108,8 @@ class NotedownContentsManager(FileContentsManager):
                                     reason='bad type')
             model = self._file_model(path, content=content, format=format)
         return model
+
+
+class NotedownContentsManagerStripped(NotedownContentsManager):
+    """NotedownContentsManager for writing stripped output markdown. """
+    strip_outputs = True
