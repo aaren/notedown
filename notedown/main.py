@@ -81,7 +81,7 @@ the rmagic extension to execute the code blocks:
 
 def convert(content, informat, outformat, strip_outputs=False):
     if os.path.exists(content):
-        with open(content) as f:
+        with io.open(content, 'r', encoding='utf-8') as f:
             contents = f.read()
     else:
         contents = content
