@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -100,7 +101,7 @@ code. Code goes into code cells, not-code goes into markdown cells.
 
 Installation:
 
-    pip install notedown
+    pip install notedown ааа
 """
 
 # Generate the sample notebook from the markdown using
@@ -113,7 +114,7 @@ Installation:
 # which is defined in create_json_notebook() below
 
 
-sample_notebook = r"""{
+sample_notebook = ur"""{
  "cells": [
   {
    "cell_type": "markdown",
@@ -152,7 +153,7 @@ sample_notebook = r"""{
    "metadata": {},
    "outputs": [],
    "source": [
-    "pip install notedown"
+    "pip install notedown ааа"
    ]
   }
  ],
