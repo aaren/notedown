@@ -72,6 +72,15 @@ For IPython your config is `ipython_notebook_config.py` in your ipython
 profile (probably `~/.ipython/profile_default`):
 
 
+### Editing in vim
+
+There is a [vim plugin][vimplug] that allows editing notebooks (ipynb files)
+directly in vim. They will be automatically converted to markdown on opening the
+file, and converted back to the original json format on writing.
+
+[vimplug]: https://github.com/goerz/ipynb_notedown.vim
+
+
 ### R-markdown
 
 You can use `notedown` to convert r-markdown as well. We just need
