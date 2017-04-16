@@ -171,6 +171,73 @@ Not a notebook in sight!
 The `--render` flag forces the output format to markdown.
 
 
+#### Syntax highlighting with Github flavored markdown
+
+If you are using [vim-flavored-markdown], put the following into
+``after/syntax/ghmarkdown.vim``:
+
+```viml
+" Enable syntax highlighting for python code blocks in Github flavored markdown
+" http://vim.wikia.com/wiki/Different_syntax_highlighting_within_regions_of_a_file
+
+if exists('b:current_syntax')
+  let s:current_syntax=b:current_syntax
+  unlet b:current_syntax
+endif
+
+execute 'syntax include @pythonGroup syntax/python.vim'
+try
+  execute 'syntax include @pythonGroup after/syntax/python.vim'
+catch
+  endtry
+
+if exists('s:current_syntax')
+  let b:current_syntax=s:current_syntax
+else
+  unlet b:current_syntax
+endif
+
+execute 'syntax cluster markdownBlock add=markdownGHPythonCodeBlock'
+execute 'syntax region markdownGHPythonCodeBlock matchgroup=markdownCodeDelimiter start="^\s*$\n\s*```\s\?py\S*\s*$" end="\s*```$\n\s*\n" contained  keepend contains=@pythonGroup' 
+
+if exists('b:current_syntax')
+  let s:current_syntax=b:current_syntax
+  unlet b:current_syntax
+endif
+
+execute 'syntax include syntax/tex.vim'
+try
+  execute 'syntax include after/syntax/tex.vim'
+catch
+  endtry
+
+if exists('s:current_syntax')
+  let b:current_syntax=s:current_syntax
+else
+  unlet b:current_syntax
+endif
+
+
+" display maths with $$ ... $$
+execute 'syn region texdisplaymaths start="\$\$" end="\$\$" skip="\\\$" contains=@texMathZoneGroup'
+" inline maths with $ ... $
+" start is a $ not preceded by another $        - \(\$\)\@<!\$
+" and not preceded by a \ (concat)              - \(\$\)\@<!\&\(\\\)\@<!\$
+" and not followed by another $                 - \$\(\$\)\@!
+" ending in a $ not preceded by a \             - \((\$\)\@<!\$
+" skipping any \$                               - \\\$
+" see :help \@<! for more
+execute 'syn region texinlinemaths start="\(\$\)\@<!\&\(\\\)\@<!\$\(\$\)\@!" end="\(\$\)\@<!\$" skip="\\\$" contains=@texMathZoneGroup'
+" restriction is that you can't have something like \$$maths$ - there
+" has to be a space after all of the \$ (literal $)
+
+" display maths with \begin{equation} ... \end{}
+execute 'syn region texequationmaths start="^\s*\\begin{\(equation\|align\|gather\)\*\=}\s*$\n" keepend end="^\s*\\end{\(equation\|align\|gather\)\*\=}\s*$\n" contains=@texMathZoneGroup'
+
+```
+
+[vim-flavored-markdown]: https://github.com/jtratner/vim-flavored-markdown
+
 ### TODO
 
 - [x] Python 3 support
