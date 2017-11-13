@@ -264,37 +264,30 @@ class MarkdownReader(NotebookReader):
         code_matches = [m for m in self.code_pattern.finditer(text)]
 
         # determine where the limits of the non code bits are
-        # based on the code block edges
+        # based on the code block edges and save the block
+        # edge to merge code and text blocks.
         text_starts = [0] + [m.end() for m in code_matches]
         text_stops = [m.start() for m in code_matches] + [len(text)]
         text_limits = list(zip(text_starts, text_stops))
 
         # list of the groups from the code blocks
-        code_blocks = [self.new_code_block(**m.groupdict())
+        code_blocks = [(m.start(), self.new_code_block(**m.groupdict()))
                        for m in code_matches]
 
-        text_blocks = [self.new_text_block(content=text[i:j])
+        text_blocks = [(i, self.new_text_block(content=text[i:j]))
                        for i, j in text_limits]
 
         # remove indents
-        list(map(self.pre_process_code_block, code_blocks))
+        for pos, block in code_blocks:
+            self.pre_process_code_block(block)
         # remove blank line at start and end of markdown
-        list(map(self.pre_process_text_block, text_blocks))
+        for pos, block in text_blocks:
+            self.pre_process_text_block(block)
 
-        # create a list of the right length
-        all_blocks = list(range(len(text_blocks) + len(code_blocks)))
-
-        # NOTE: the behaviour here is a bit fragile in that we
-        # assume that cells must alternate between code and
-        # markdown. This isn't the case, as we could have
-        # consecutive code cells, and we get around this by
-        # stripping out empty cells. i.e. two consecutive code cells
-        # have an empty markdown cell between them which is stripped
-        # out because it is empty.
-
-        # cells must alternate in order
-        all_blocks[::2] = text_blocks
-        all_blocks[1::2] = code_blocks
+        # Merge back text and code blocks using the
+        #   start position.
+        all_blocks = sorted(text_blocks + code_blocks, key=lambda x: x[0])
+        all_blocks = [block for pos, block in all_blocks]
 
         # remove possible empty text cells
         all_blocks = [cell for cell in all_blocks if cell['content']]
