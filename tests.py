@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import os
 import tempfile
@@ -114,7 +115,7 @@ Installation:
 # which is defined in create_json_notebook() below
 
 
-sample_notebook = ur"""{
+sample_notebook = r"""{
  "cells": [
   {
    "cell_type": "markdown",
@@ -159,7 +160,7 @@ sample_notebook = ur"""{
  ],
  "metadata": {},
  "nbformat": 4,
- "nbformat_minor": 0
+ "nbformat_minor": 2
 }"""
 
 roundtrip_markdown = u"""## A roundtrip test
