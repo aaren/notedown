@@ -465,7 +465,7 @@ class MarkdownWriter(NotebookWriter):
         return cast_unicode(json.dumps(string, **kwargs), 'utf-8')
 
     def create_input_codeblock(self, cell):
-        codeblock = ('{fence}{attributes}\n'
+        codeblock = cast_unicode('{fence}{attributes}\n'
                      '{cell.source}\n'
                      '{fence}')
         attrs = self.create_attributes(cell, cell_type='input')
