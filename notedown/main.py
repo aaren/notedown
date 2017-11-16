@@ -154,6 +154,9 @@ def command_line_parser():
                         action='store_true',
                         help=("run the notebook, executing the "
                               "contents of each cell"))
+    parser.add_argument('--kernel',
+                        default='python2',
+                        help=("kernel to use to run the notebook"))
     parser.add_argument('--timeout',
                         default=30,
                         type=int,
@@ -254,6 +257,7 @@ def main(args, help=''):
                'markdown': MarkdownReader(precode='\n'.join(args.precode),
                                           magic=args.magic,
                                           match=args.match,
+                                          kernel=args.kernel,
                                           caption_comments=args.render)
                }
 

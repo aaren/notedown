@@ -99,7 +99,7 @@ class MarkdownReader(NotebookReader):
     """
 
     def __init__(self, code_regex=None, precode='', magic=True,
-                 match='all', caption_comments=False):
+                 kernel='python', match='all', caption_comments=False):
         """
             code_regex - Either 'fenced' or 'indented' or
                          a regular expression that matches code blocks in
@@ -116,6 +116,8 @@ class MarkdownReader(NotebookReader):
             magic      - whether to use code cell language magic, e.g.
                          put '%bash' at start of cells that have language
                          'bash'
+
+            kernel     - language kernel to use (defaults to python)
 
             match      - one of 'all', 'fenced' or 'strict' or a specific
                          language name
@@ -139,6 +141,7 @@ class MarkdownReader(NotebookReader):
 
         self.precode = precode
         self.magic = magic
+        self.kernel = kernel
 
         self.match = match
 
@@ -370,8 +373,18 @@ class MarkdownReader(NotebookReader):
         blocks = [self.process_code_block(block) for block in all_blocks]
 
         cells = self.create_cells(blocks)
+        metadata = {}
 
-        nb = nbbase.new_notebook(cells=cells)
+        from jupyter_client import kernelspec
+        try:
+            ks = kernelspec.get_kernel_spec(self.kernel)
+            kd = ks.to_dict()
+            kd['name'] = self.kernel
+            metadata['kernelspec'] = kd
+        except kernelspec.NoSuchKernel:
+            pass
+
+        nb = nbbase.new_notebook(cells=cells, metadata=metadata)
 
         return nb
 
@@ -426,11 +439,20 @@ class MarkdownWriter(NotebookWriter):
         self.write_outputs = write_outputs
         self.output_dir = output_dir
 
+        self.langugage = 'python'
+
+    def init(self, notebook):
+        # TODO: this isn't reliable. Might need to look at
+        # language_info or create a look up between kernel names
+        # and language names.
+        self.language = notebook.metadata.kernelspec.language
+
     def write_from_json(self, notebook_json):
         notebook = v4.reads_json(notebook_json)
         return self.write(notebook)
 
     def writes(self, notebook):
+        self.init(notebook)
         body, resources = self.exporter.from_notebook_node(notebook)
         self.resources = resources
 
@@ -469,11 +491,12 @@ class MarkdownWriter(NotebookWriter):
         }
         return cast_unicode(json.dumps(string, **kwargs), 'utf-8')
 
-    def create_input_codeblock(self, cell):
+    def create_input_codeblock(self, cell, language=None):
         codeblock = ('{fence}{attributes}\n'
                      '{cell.source}\n'
                      '{fence}')
-        attrs = self.create_attributes(cell, cell_type='input')
+        attrs = self.create_attributes(cell, cell_type='input',
+                                       language=language)
         return codeblock.format(attributes=attrs, fence='```', cell=cell)
 
     def create_output_block(self, cell):
@@ -490,18 +513,20 @@ class MarkdownWriter(NotebookWriter):
                                 execution_count=cell.execution_count,
                                 contents=self.string2json(cell.outputs))
 
-    def create_attributes(self, cell, cell_type=None):
+    def create_attributes(self, cell, cell_type=None, language=None):
         """Turn the attribute dict into an attribute string
         for the code block.
         """
+        language = language or self.language
+
         if self.strip_outputs or not hasattr(cell, 'execution_count'):
-            return 'python'
+            return language
 
         attrs = cell.metadata.get('attributes')
         attr = PandocAttributes(attrs, 'dict')
 
-        if 'python' in attr.classes:
-            attr.classes.remove('python')
+        if language in attr.classes:
+            attr.classes.remove(language)
         if 'input' in attr.classes:
             attr.classes.remove('input')
 
@@ -512,8 +537,8 @@ class MarkdownWriter(NotebookWriter):
             return attr.to_html()
 
         elif cell_type == 'input':
-            # ensure python goes first so that github highlights it
-            attr.classes.insert(0, 'python')
+            # ensure language goes first so that github highlights it
+            attr.classes.insert(0, language)
             attr.classes.insert(1, 'input')
             if cell.execution_count:
                 attr.kvs['n'] = cell.execution_count
