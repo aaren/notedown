@@ -158,7 +158,7 @@ sample_notebook = r"""{
  ],
  "metadata": {},
  "nbformat": 4,
- "nbformat_minor": 0
+ "nbformat_minor": 2
 }"""
 
 roundtrip_markdown = u"""## A roundtrip test
