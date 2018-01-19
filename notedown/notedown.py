@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import yaml
 import json
 import logging
 import os
@@ -362,6 +363,14 @@ class MarkdownReader(NotebookReader):
 
         Returns a notebook.
         """
+        # Split YAML metadata and the rest source code:
+        m = re.match(r'^---\n(.*)(?:---|\.\.\.)(?:\n(.*)|$)', s, re.DOTALL)
+        if m:
+            metadata = m.group(1)
+            s = m.group(2) if (m.group(2) is not None) else ""
+        else:
+            metadata = ""
+        #
         all_blocks = self.parse_blocks(s)
         if self.pre_code_block['content']:
             # TODO: if first block is markdown, place after?
@@ -371,7 +380,7 @@ class MarkdownReader(NotebookReader):
 
         cells = self.create_cells(blocks)
 
-        nb = nbbase.new_notebook(cells=cells)
+        nb = nbbase.new_notebook(cells=cells, metadata=yaml.load(metadata))
 
         return nb
 
