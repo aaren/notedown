@@ -364,12 +364,12 @@ class MarkdownReader(NotebookReader):
         Returns a notebook.
         """
         # Split YAML metadata and the rest source code:
-        m = re.match(r'^---\n(.*)(?:---|\.\.\.)(?:\n(.*)|$)', s, re.DOTALL)
+        m = re.match(r'^---\n(.+)(?:---|\.\.\.)(?:\n(.*)|$)', s, re.DOTALL)
         if m:
-            metadata = m.group(1)
+            metadata = {'metadata': yaml.load(m.group(1))}
             s = m.group(2) if (m.group(2) is not None) else ""
         else:
-            metadata = ""
+            metadata = {}
         #
         all_blocks = self.parse_blocks(s)
         if self.pre_code_block['content']:
@@ -380,7 +380,7 @@ class MarkdownReader(NotebookReader):
 
         cells = self.create_cells(blocks)
 
-        nb = nbbase.new_notebook(cells=cells, metadata=yaml.load(metadata))
+        nb = nbbase.new_notebook(cells=cells, **metadata)
 
         return nb
 
