@@ -364,7 +364,7 @@ class MarkdownReader(NotebookReader):
         Returns a notebook.
         """
         # Split YAML metadata and the rest source code:
-        m = re.match(r'^---\n(.+)(?:---|\.\.\.)(?:\n(.*)|$)', s, re.DOTALL)
+        m = re.match(r'^---\n(.+?\n)(?:---|\.\.\.)(?:\n(.*)|$)', s, re.DOTALL)
         if m:
             metadata = {'metadata': yaml.load(m.group(1))}
             s = m.group(2) if (m.group(2) is not None) else ""
