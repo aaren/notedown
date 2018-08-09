@@ -1,6 +1,6 @@
 language: python
 
-dist: precise
+dist: trusty
 sudo: no
 
 python:
@@ -20,7 +20,8 @@ matrix:
 addons:
   apt:
     sources:
-      - r-packages-precise
+      # R version in trusty is quite old - knitr is not available for this version
+      - sourceline: "deb https://cloud.r-project.org/bin/linux/ubuntu trusty/"
     packages:
       - r-base-dev
 
