@@ -274,8 +274,23 @@ class MarkdownReader(NotebookReader):
         code_blocks = [(m.start(), self.new_code_block(**m.groupdict()))
                        for m in code_matches]
 
-        text_blocks = [(i, self.new_text_block(content=text[i:j]))
-                       for i, j in text_limits]
+        text_blocks = {i: self.new_text_block(content=text[i:j])
+                       for i, j in text_limits}
+
+        # split text blocks separated by `---` in smaller blocks,
+        #  so that we can create different slides from them.
+        text_blocks_list = list(text_blocks.items())
+        for k, v in text_blocks_list:
+            content = v.pop('content')
+
+            slide_split = [m.start() for m in re.finditer("-+\n+", content)]
+            start, end = [0] + slide_split, slide_split + [-1]
+            text_blocks.update({
+                k + i: dict(content=content[i:j], **v)
+                for i, j in zip(start, end)
+            })
+        text_blocks = list(text_blocks.items())
+
 
         # remove indents
         for pos, block in code_blocks:
@@ -314,8 +329,17 @@ class MarkdownReader(NotebookReader):
     @staticmethod
     def create_markdown_cell(block):
         """Create a markdown cell from a block."""
+        slide = {}
+        if block['content'].startswith('---\n'):
+            slide = {"slideshow": {"slide_type": "slide"}}
+
+        if block['content'].startswith('----\n'):
+            slide = {"slideshow": {"slide_type": "subslide"}}
+
         kwargs = {'cell_type': block['type'],
                   'source': block['content']}
+        kwargs.update({"metadata": slide})
+
         markdown_cell = nbbase.new_markdown_cell(**kwargs)
         return markdown_cell
 
