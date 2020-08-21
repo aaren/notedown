@@ -274,10 +274,23 @@ class MarkdownReader(NotebookReader):
         code_blocks = [(m.start(), self.new_code_block(**m.groupdict()))
                        for m in code_matches]
 
-        text_blocks = [(i, self.new_text_block(content=h))
-                       for i, j in text_limits
-                       for h in text[i:j].split("\n---\n")
-        ]
+        text_blocks = {i: self.new_text_block(content=text[i:j])
+                       for i, j in text_limits}
+
+        # import pdb; pdb.set_trace()
+        tbl = list(text_blocks.items())
+        for k, v in tbl:
+            content = v.pop('content')
+
+            slide_split = [m.start() for m in re.finditer("-+\n+", content)]
+            inner_text_blocks_starts = [0] + slide_split
+            inner_text_blocks_ends =  slide_split + [-1]
+            text_blocks.update(
+                {k+i:dict(content=content[i:j], **v) for i,j in zip(inner_text_blocks_starts,inner_text_blocks_ends)}
+            )
+
+        text_blocks = list(text_blocks.items())
+
 
         # remove indents
         for pos, block in code_blocks:
@@ -316,8 +329,17 @@ class MarkdownReader(NotebookReader):
     @staticmethod
     def create_markdown_cell(block):
         """Create a markdown cell from a block."""
+        slide = {}
+        if block['content'].startswith('---\n'):
+            slide = {"slideshow": {"slide_type": "slide"}}
+
+        if block['content'].startswith('----\n'):
+            slide = {"slideshow": {"slide_type": "subslide"}}
+
         kwargs = {'cell_type': block['type'],
                   'source': block['content']}
+        kwargs.update({"metadata": slide})
+
         markdown_cell = nbbase.new_markdown_cell(**kwargs)
         return markdown_cell
 
@@ -465,7 +487,7 @@ class MarkdownWriter(NotebookWriter):
         return cast_unicode(json.dumps(string, **kwargs), 'utf-8')
 
     def create_input_codeblock(self, cell):
-        codeblock = cast_unicode('{fence}{attributes}\n'
+        codeblock = ('{fence}{attributes}\n'
                      '{cell.source}\n'
                      '{fence}')
         attrs = self.create_attributes(cell, cell_type='input')
