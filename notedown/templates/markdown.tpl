@@ -1,4 +1,4 @@
-{% extends 'display_priority.tpl' %}
+{% extends 'base/display_priority.j2' %}
 
 {% block input %}
 {{ cell | create_input_codeblock }}
