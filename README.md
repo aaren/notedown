@@ -1,7 +1,9 @@
 [Original repo](https://github.com/aaren/notedown) is dead and has only one [semialive fork](https://github.com/mli/notedown) (with changed default behavior).
-This is the fork of original repo with pull request applied (partially, for now -- 2/6, do not think thay I need all).
+This is the fork of original repo with 2 last pull request applied (#93, #96) and refactoring.
 
-Also there will be no R support.
+Also there is no R support.
+
+I needed it for https://github.com/szymonmaszke/vimpyter but switched to https://github.com/goerz/jupytext.vim
 
 ---
 
