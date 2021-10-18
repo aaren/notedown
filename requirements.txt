@@ -1,0 +1,5 @@
+nbformat
+nbconvert
+pandoc-attributes
+nose
+jupyter

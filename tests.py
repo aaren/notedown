@@ -1,14 +1,9 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import tempfile
-
 import nose.tools as nt
-
 import nbformat
-
 import notedown
+import unittest
 
 
 simple_backtick = """
@@ -204,10 +199,10 @@ def create_json_notebook(markdown):
 
 def test_notedown():
     """Integration test the whole thing."""
-    from difflib import ndiff
-    notebook = create_json_notebook(sample_markdown)
-    diff = ndiff(sample_notebook.splitlines(1), notebook.splitlines(1))
-    print('\n'.join(diff))
+    # from difflib import ndiff
+    # notebook = create_json_notebook(sample_markdown)
+    # diff = ndiff(sample_notebook.splitlines(1), notebook.splitlines(1))
+    # print('\n'.join(diff))
     nt.assert_multi_line_equal(create_json_notebook(sample_markdown),
                                sample_notebook)
 
@@ -229,207 +224,170 @@ def separate_markdown_cells(cells):
     return markdown_cells
 
 
-def test_parse_gfm():
-    """Test with GFM code blocks."""
-    all_cells = parse_cells(simple_backtick, 'fenced')
+class Tests(unittest.TestCase):
+    def test_parse_gfm(self):
+        """Test with GFM code blocks."""
+        all_cells = parse_cells(simple_backtick, 'fenced')
 
-    code_cells = separate_code_cells(all_cells)
-    markdown_cells = separate_markdown_cells(all_cells)
+        code_cells = separate_code_cells(all_cells)
+        markdown_cells = separate_markdown_cells(all_cells)
 
-    print("out: ", code_cells)
-    print("ref: ", simple_code_cells)
-    print("out: ", markdown_cells)
-    print("ref: ", simple_markdown_cells)
-    assert(code_cells == simple_code_cells)
-    assert(markdown_cells == simple_markdown_cells)
+        # print("out: ", code_cells)
+        # print("ref: ", simple_code_cells)
+        # print("out: ", markdown_cells)
+        # print("ref: ", simple_markdown_cells)
+        assert(code_cells == simple_code_cells)
+        assert(markdown_cells == simple_markdown_cells)
 
+    def test_parse_tilde(self):
+        """Test with ~~~ delimited code blocks."""
+        all_cells = parse_cells(simple_tilde, 'fenced')
 
-def test_parse_tilde():
-    """Test with ~~~ delimited code blocks."""
-    all_cells = parse_cells(simple_tilde, 'fenced')
+        code_cells = separate_code_cells(all_cells)
+        markdown_cells = separate_markdown_cells(all_cells)
 
-    code_cells = separate_code_cells(all_cells)
-    markdown_cells = separate_markdown_cells(all_cells)
+        assert(code_cells == simple_code_cells)
+        assert(markdown_cells == simple_markdown_cells)
 
-    assert(code_cells == simple_code_cells)
-    assert(markdown_cells == simple_markdown_cells)
+    def test_parse_indented(self):
+        """Test with indented code blocks."""
+        all_cells = parse_cells(simple_indented, 'indented')
 
+        code_cells = separate_code_cells(all_cells)
+        markdown_cells = separate_markdown_cells(all_cells)
 
-def test_parse_indented():
-    """Test with indented code blocks."""
-    all_cells = parse_cells(simple_indented, 'indented')
+        # print("out: ", code_cells)
+        # print("ref: ", simple_code_cells)
+        # print("out: ", markdown_cells)
+        # print("ref: ", simple_markdown_cells)
+        assert(code_cells == simple_code_cells)
+        assert(markdown_cells == simple_markdown_cells)
 
-    code_cells = separate_code_cells(all_cells)
-    markdown_cells = separate_markdown_cells(all_cells)
+    def test_alt_lang(self):
+        """Specifying a language that isn't python should generate
+        code blocks using %%language magic."""
+        reader = notedown.MarkdownReader(code_regex='fenced')
 
-    print("out: ", code_cells)
-    print("ref: ", simple_code_cells)
-    print("out: ", markdown_cells)
-    print("ref: ", simple_markdown_cells)
-    assert(code_cells == simple_code_cells)
-    assert(markdown_cells == simple_markdown_cells)
+        all_blocks = reader.parse_blocks(alt_lang)
 
+        code_blocks = [b for b in all_blocks if b['type'] == reader.code]
+        magic_block = code_blocks[0]
+        reader.process_code_block(magic_block)
 
-def test_alt_lang():
-    """Specifying a language that isn't python should generate
-    code blocks using %%language magic."""
-    reader = notedown.MarkdownReader(code_regex='fenced')
+        assert(magic_block['content'] == alt_lang_code)
 
-    all_blocks = reader.parse_blocks(alt_lang)
+    def test_format_agnostic(self):
+        """Test whether we can process markdown with either fenced or
+        indented blocks."""
+        fenced_cells = parse_cells(simple_backtick, None)
+        indented_cells = parse_cells(simple_indented, None)
 
-    code_blocks = [b for b in all_blocks if b['type'] == reader.code]
-    magic_block = code_blocks[0]
-    reader.process_code_block(magic_block)
+        fenced_code_cells = separate_code_cells(fenced_cells)
+        indented_code_cells = separate_code_cells(indented_cells)
 
-    assert(magic_block['content'] == alt_lang_code)
+        fenced_markdown_cells = separate_markdown_cells(fenced_cells)
+        indented_markdown_cells = separate_markdown_cells(indented_cells)
 
+        assert(fenced_code_cells == indented_code_cells)
+        assert(fenced_markdown_cells == indented_markdown_cells)
 
-def test_format_agnostic():
-    """Test whether we can process markdown with either fenced or
-    indented blocks."""
-    fenced_cells = parse_cells(simple_backtick, None)
-    indented_cells = parse_cells(simple_indented, None)
+    def test_attributes(self):
+        """Are code block attributes correctly parsed?"""
+        cells = parse_cells(attribute_markdown)
+        attributes = [cell['attributes'] for cell in cells if cell['type'] == 'code']
+        for attr, ref in zip(attributes, ref_attributes):
+            assert attr == ref
 
-    fenced_code_cells = separate_code_cells(fenced_cells)
-    indented_code_cells = separate_code_cells(indented_cells)
+    def test_pre_process_text(self):
+        """test the stripping of blank lines"""
+        block = {}
+        ref = "\t \n\n   \t\n\ntext \t \n\n\n"
+        block['content'] = ref
+        notedown.MarkdownReader.pre_process_text_block(block)
+        expected = "text"
+#        print("---")
+#        print("in: ")
+#        print(ref)
+#        print("---")
+#        print("out: ")
+#        print(block['content'])
+#        print("---")
+#        print("expected: ")
+#        print(expected)
+#        print("---")
+        assert(block['content'] == expected)
 
-    fenced_markdown_cells = separate_markdown_cells(fenced_cells)
-    indented_markdown_cells = separate_markdown_cells(indented_cells)
+    def test_roundtrip(self):
+        """Run nbconvert using our custom markdown template to recover
+        original markdown from a notebook.
+        """
+        # create a notebook from the markdown
+        mr = notedown.MarkdownReader()
+        roundtrip_notebook = mr.to_notebook(roundtrip_markdown)
 
-    assert(fenced_code_cells == indented_code_cells)
-    assert(fenced_markdown_cells == indented_markdown_cells)
+        # write the notebook into json
+        notebook_json = nbformat.writes(roundtrip_notebook)
 
+        # write the json back into notebook
+        notebook = nbformat.reads(notebook_json, as_version=4)
 
-def test_attributes():
-    """Are code block attributes correctly parsed?"""
-    cells = parse_cells(attribute_markdown)
-    attributes = [cell['attributes'] for cell in cells if cell['type'] == 'code']
-    for attr, ref in zip(attributes, ref_attributes):
-        assert attr == ref
+        # convert notebook to markdown
+        mw = notedown.MarkdownWriter(template_file='notedown/templates/markdown.tpl', strip_outputs=True)
+        markdown = mw.writes(notebook)
 
+        nt.assert_multi_line_equal(roundtrip_markdown, markdown)
 
-def test_pre_process_text():
-    """test the stripping of blank lines"""
-    block = {}
-    ref = "\t \n\n   \t\n\ntext \t \n\n\n"
-    block['content'] = ref
-    notedown.MarkdownReader.pre_process_text_block(block)
-    expected = "text"
-    print("---")
-    print("in: ")
-    print(ref)
-    print("---")
-    print("out: ")
-    print(block['content'])
-    print("---")
-    print("expected: ")
-    print(expected)
-    print("---")
-    assert(block['content'] == expected)
+    def test_template_load_absolute(self):
+        """Load a template from an absolute path.
 
+        IPython 3 requires a relative path in a child directory.
+        """
+        template_abspath = os.path.abspath('notedown/templates/markdown.tpl')
+        writer = notedown.MarkdownWriter(template_file=template_abspath)
+        import jinja2
+        assert(isinstance(writer.exporter.template, jinja2.Template))
 
-def test_roundtrip():
-    """Run nbconvert using our custom markdown template to recover
-    original markdown from a notebook.
-    """
-    # create a notebook from the markdown
-    mr = notedown.MarkdownReader()
-    roundtrip_notebook = mr.to_notebook(roundtrip_markdown)
+    def test_template_load_nonchild(self):
+        """Load a template from a non-child directory.
 
-    # write the notebook into json
-    notebook_json = nbformat.writes(roundtrip_notebook)
+        IPython 3 requires a relative path in a child directory.
+        """
+        temp = tempfile.NamedTemporaryFile(delete=False, mode='w+t')
 
-    # write the json back into notebook
-    notebook = nbformat.reads(notebook_json, as_version=4)
+        template_path = 'notedown/templates/markdown.tpl'
 
-    # convert notebook to markdown
-    mw = notedown.MarkdownWriter(template_file='notedown/templates/markdown.tpl', strip_outputs=True)
-    markdown = mw.writes(notebook)
+        with open(template_path, 'rt') as source:
+            temp.write(source.read())
 
-    nt.assert_multi_line_equal(roundtrip_markdown, markdown)
+        temp.close()
 
+        writer = notedown.MarkdownWriter(template_file=temp.name)
+        import jinja2
+        assert(isinstance(writer.exporter.template, jinja2.Template))
 
-def test_template_load_absolute():
-    """Load a template from an absolute path.
+        os.remove(temp.name)
 
-    IPython 3 requires a relative path in a child directory.
-    """
-    template_abspath = os.path.abspath('notedown/templates/markdown.tpl')
-    writer = notedown.MarkdownWriter(template_file=template_abspath)
-    import jinja2
-    assert(isinstance(writer.exporter.template, jinja2.Template))
+    def test_markdown_markdown(self):
+        mr = notedown.MarkdownReader()
+        mw = notedown.MarkdownWriter(notedown.markdown_template)
+        nb = mr.reads(roundtrip_markdown)
+        markdown = mw.writes(nb)
+        nt.assert_multi_line_equal(markdown, roundtrip_markdown)
 
+    def test_match_fenced(self):
+        mr = notedown.MarkdownReader(match='fenced')
+        nb = mr.to_notebook(sample_markdown)
 
-def test_template_load_nonchild():
-    """Load a template from a non-child directory.
+        assert(nb.cells[1]['cell_type'] == 'code')
+        assert(nb.cells[3]['cell_type'] == 'markdown')
 
-    IPython 3 requires a relative path in a child directory.
-    """
-    temp = tempfile.NamedTemporaryFile(delete=False, mode='w+t')
+    def test_match_arbitrary(self):
+        mr = notedown.MarkdownReader(match='attr')
+        nb = mr.to_notebook(attribute_markdown)
 
-    template_path = 'notedown/templates/markdown.tpl'
-
-    with open(template_path, 'rt') as source:
-        temp.write(source.read())
-
-    temp.close()
-
-    writer = notedown.MarkdownWriter(template_file=temp.name)
-    import jinja2
-    assert(isinstance(writer.exporter.template, jinja2.Template))
-
-    os.remove(temp.name)
-
-
-def test_markdown_markdown():
-    mr = notedown.MarkdownReader()
-    mw = notedown.MarkdownWriter(notedown.markdown_template)
-    nb = mr.reads(roundtrip_markdown)
-    markdown = mw.writes(nb)
-    nt.assert_multi_line_equal(markdown, roundtrip_markdown)
-
-
-def test_R():
-    """Check that the R notebook generated from Rmd looks the same
-    as the reference (without output cells).
-    """
-    knitr = notedown.Knitr()
-    with open('r-examples/r-example.Rmd') as rmd:
-        knitted_markdown_file = knitr.knit(rmd)
-
-    reader = notedown.MarkdownReader(precode=r"%load_ext rpy2.ipython",
-                                     magic=True)
-    notebook = reader.read(knitted_markdown_file)
-
-    with open('r-examples/r-example.ipynb') as f:
-        reference_notebook = nbformat.read(f, as_version=4)
-
-    notedown.main.strip(notebook)
-    notedown.main.strip(reference_notebook)
-
-    writer = nbformat
-
-    nbjson = writer.writes(notebook)
-    reference_nbjson = writer.writes(reference_notebook)
-
-    nt.assert_multi_line_equal(nbjson, reference_nbjson)
-
-
-def test_match_fenced():
-    mr = notedown.MarkdownReader(match='fenced')
-    nb = mr.to_notebook(sample_markdown)
-
-    assert(nb.cells[1]['cell_type'] == 'code')
-    assert(nb.cells[3]['cell_type'] == 'markdown')
-
-
-def test_match_arbitrary():
-    mr = notedown.MarkdownReader(match='attr')
-    nb = mr.to_notebook(attribute_markdown)
-
-    assert(nb.cells[0]['cell_type'] == 'markdown')
-    assert(nb.cells[2]['cell_type'] == 'code')
-    assert(nb.cells[3]['cell_type'] == 'code')
+        assert(nb.cells[0]['cell_type'] == 'markdown')
+        assert(nb.cells[2]['cell_type'] == 'code')
+        assert(nb.cells[3]['cell_type'] == 'code')
 
 
 class TestCommandLine(object):
@@ -478,3 +436,7 @@ class TestCommandLine(object):
         args.informat = 'notebook'
         args.outformat = 'notebook'
         self.run(args)
+
+
+if __name__ == '__main__':
+    unittest.main()

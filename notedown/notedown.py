@@ -1,38 +1,29 @@
-from __future__ import absolute_import
-
 import json
 import logging
 import os
 import re
-import subprocess
-import tempfile
-
-from six import PY3
-from six.moves import map
-from six.moves import range
-from six.moves import zip
-
 import nbformat.v4.nbbase as nbbase
 import nbformat.v4 as v4
-
 from nbformat.v4.rwbase import NotebookReader
 from nbformat.v4.rwbase import NotebookWriter
 from nbformat.v4.nbjson import BytesEncoder
-
 from nbconvert.preprocessors.execute import ExecutePreprocessor
-
 from nbconvert import TemplateExporter
-
 from pandocattributes import PandocAttributes
 
-languages = ['python', 'r', 'ruby', 'bash']
+
+languages = ['python', 'bash']
 
 
 def cast_unicode(s, encoding='utf-8'):
     """Python 2/3 compatibility function derived from IPython py3compat."""
-    if isinstance(s, bytes) and not PY3:
-        return s.decode(encoding, "replace")
-    return s
+    try:
+        unicode  # py2
+    except NameError:
+        return s  # py3
+    else:
+        if isinstance(s, bytes):
+            return s.decode(encoding, "replace")
 
 
 def strip(notebook):
@@ -197,9 +188,7 @@ class MarkdownReader(NotebookReader):
             pass
 
         elif self.match == 'fenced' and block.get('indent'):
-            return self.new_text_block(content=('\n' +
-                                                block['icontent'] +
-                                                '\n'))
+            return self.new_text_block(content=('\n' + block['icontent'] + '\n'))
 
         elif self.match == 'strict' and 'input' not in attr.classes:
             return self.new_text_block(content=block['raw'])
@@ -342,9 +331,7 @@ class MarkdownReader(NotebookReader):
                 code_cell = self.create_code_cell(block)
                 cells.append(code_cell)
 
-            elif (block['type'] == self.code and
-                  block['IO'] == 'output' and
-                  cells[-1].cell_type == 'code'):
+            elif (block['type'] == self.code) and (block['IO'] == 'output') and (cells[-1].cell_type == 'code'):
                 cells[-1].outputs = self.create_outputs(block)
 
             elif block['type'] == self.markdown:
@@ -570,79 +557,6 @@ class CodeMagician(object):
             return self.aliases[alias]
         else:
             return "%%{}\n".format(alias)
-
-
-class Knitr(object):
-    class KnitrError(Exception):
-        pass
-
-    def __init__(self):
-        # raise exception if R or knitr not installed
-        cmd = ['Rscript', '-e', 'require(knitr)']
-
-        try:
-            p = subprocess.Popen(cmd,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
-        except OSError:
-            message = "Rscript was not found on your path."
-            raise self.KnitrError(message)
-
-        stdout, stderr = p.communicate()
-
-        # cast to unicode for Python 3 compatibility
-        stderr = stderr.decode('utf8')
-
-        if 'Warning' in stderr:
-            message = ("Could not load knitr (needs manual installation).\n\n"
-                       "$ {cmd}\n"
-                       "{error}").format(cmd=' '.join(cmd), error=stderr)
-            raise self.KnitrError(message)
-
-    def knit(self, input_file, opts_chunk='eval=FALSE'):
-        """Use Knitr to convert the r-markdown input_file
-        into markdown, returning a file object.
-        """
-        # use temporary files at both ends to allow stdin / stdout
-        tmp_in = tempfile.NamedTemporaryFile(mode='w+')
-        tmp_out = tempfile.NamedTemporaryFile(mode='w+')
-
-        tmp_in.file.write(input_file.read())
-        tmp_in.file.flush()
-        tmp_in.file.seek(0)
-
-        self._knit(tmp_in.name, tmp_out.name, opts_chunk)
-        tmp_out.file.flush()
-        return tmp_out
-
-    @staticmethod
-    def _knit(fin, fout,
-              opts_knit='progress=FALSE, verbose=FALSE',
-              opts_chunk='eval=FALSE'):
-        """Use knitr to convert r markdown (or anything knitr supports)
-        to markdown.
-
-        fin / fout - strings, input / output filenames.
-        opts_knit - string, options to pass to knit
-        opts_shunk - string, chunk options
-
-        options are passed verbatim to knitr:knit running in Rscript.
-        """
-        script = ('sink("/dev/null");'
-                  'library(knitr);'
-                  'opts_knit$set({opts_knit});'
-                  'opts_chunk$set({opts_chunk});'
-                  'knit("{input}", output="{output}")')
-
-        rcmd = ('Rscript', '-e',
-                script.format(input=fin, output=fout,
-                              opts_knit=opts_knit, opts_chunk=opts_chunk)
-                )
-
-        p = subprocess.Popen(rcmd,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
 
 
 def get_caption_comments(content):

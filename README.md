@@ -1,4 +1,11 @@
-*Python 2/3 and IPython 4 / Jupyter compatible!* <a href='https://travis-ci.org/aaren/wavelets'> <img src='https://secure.travis-ci.org/aaren/wavelets.png?branch=master'></a>
+[Original repo](https://github.com/aaren/notedown) is dead and has only one [semialive fork](https://github.com/mli/notedown) (with changed default behavior).
+This is the fork of original repo with 2 last pull request applied (#93, #96) and refactoring.
+
+Also there is no R support.
+
+I needed it for https://github.com/szymonmaszke/vimpyter but switched to https://github.com/goerz/jupytext.vim
+
+---
 
 Convert IPython Notebooks to markdown (and back)
 ------------------------------------------------
