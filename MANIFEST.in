@@ -1,3 +1,0 @@
-include README.md
-include notedown/templates/markdown.tpl
-include notedown/templates/markdown_outputs.tpl
