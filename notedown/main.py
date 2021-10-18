@@ -1,82 +1,17 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
 import os
 import sys
 import argparse
 import pkg_resources
 import io
 import logging
-
-import nbformat as nbformat
+import nbformat
 from nbconvert.utils.io import unicode_std_stream
 
-from .notedown import (MarkdownReader,
-                       MarkdownWriter,
-                       Knitr,
-                       run,
-                       strip)
+from notedown.notedown import MarkdownReader, MarkdownWriter, run, strip
 
 
-try:
-    __version__ = pkg_resources.require('notedown')[0].version
-
-except pkg_resources.DistributionNotFound:
-    __version__ = 'testing'
-
-markdown_template \
-    = pkg_resources.resource_filename('notedown',
-                                      'templates/markdown.tpl')
-markdown_figure_template \
-    = pkg_resources.resource_filename('notedown',
-                                      'templates/markdown_outputs.tpl')
-
-examples = """
-Example usage of notedown
--------------------------
-
-Convert markdown into notebook:
-
-    notedown input.md > output.ipynb
-
-    notedown input.md --output output.ipynb
-
-
-Convert a notebook into markdown, with outputs intact:
-
-    notedown input.ipynb --from notebook --to markdown > output_with_outputs.md
-
-
-Convert a notebook into markdown, stripping all outputs:
-
-    notedown input.ipynb --from notebook --to markdown --strip > output.md
-
-
-Strip the output cells from markdown:
-
-    notedown with_output_cells.md --to markdown --strip > no_output_cells.md
-
-
-Convert from markdown and execute:
-
-    notedown input.md --run > executed_notebook.ipynb
-
-
-Convert r-markdown into markdown:
-
-    notedown input.Rmd --to markdown --knit > output.md
-
-
-Convert r-markdown into an IPython notebook:
-
-    notedown input.Rmd --knit > output.ipynb
-
-
-Convert r-markdown into a notebook with the outputs computed, using
-the rmagic extension to execute the code blocks:
-
-    notedown input.Rmd --knit --rmagic --run > executed_output.ipynb
-"""
+markdown_template = pkg_resources.resource_filename('notedown', 'templates/markdown.tpl')
+markdown_figure_template = pkg_resources.resource_filename('notedown', 'templates/markdown_outputs.tpl')
 
 
 def convert(content, informat, outformat, strip_outputs=False):
@@ -168,17 +103,6 @@ def command_line_parser():
                         help=("additional code to place at the start of the "
                               "notebook, e.g. --pre '%%matplotlib inline' "
                               "'import numpy as np'"))
-    parser.add_argument('--knit',
-                        nargs='?',
-                        help=("pre-process the markdown with knitr. "
-                              "Default chunk options are 'eval=FALSE' "
-                              "but you can change this by passing a string. "
-                              "Requires R in your path and knitr installed."),
-                        const='eval=FALSE')
-    parser.add_argument('--rmagic',
-                        action='store_true',
-                        help=("autoload the rmagic extension. Synonym for "
-                              "--precode '%%load_ext rpy2.ipython'"))
     parser.add_argument('--nomagic',
                         action='store_false',
                         dest='magic',
@@ -194,16 +118,12 @@ def command_line_parser():
                               "converted into code cells. "
                               "choose from 'all' (default), 'fenced', "
                               "'strict' or a specific language to match on"))
-    parser.add_argument('--examples',
-                        help=('show example usage'),
-                        action='store_true')
     parser.add_argument('--version',
                         help=('print version number'),
                         action='store_true')
     parser.add_argument('--debug',
                         help=('show logging output'),
                         action='store_true')
-
     return parser
 
 
@@ -212,11 +132,7 @@ def main(args, help=''):
         logging.basicConfig(level=logging.DEBUG)
 
     if args.version:
-        print(__version__)
-        sys.exit()
-
-    if args.examples:
-        print(examples)
+        print(pkg_resources.require('notedown')[0].version)
         sys.exit()
 
     # if no stdin and no input file
@@ -232,14 +148,6 @@ def main(args, help=''):
 
     else:
         sys.exit('malformed input')
-
-    # pre-process markdown by using knitr on it
-    if args.knit:
-        knitr = Knitr()
-        input_file = knitr.knit(input_file, opts_chunk=args.knit)
-
-    if args.rmagic:
-        args.precode.append(r"%load_ext rpy2.ipython")
 
     if args.render:
         template_file = markdown_figure_template
