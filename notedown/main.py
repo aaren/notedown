@@ -4,7 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import argparse
-import pkg_resources
+import importlib
 import io
 import logging
 
@@ -19,12 +19,20 @@ from .notedown import (MarkdownReader,
 
 __version__ = '1.5.1'
 
-markdown_template \
-    = pkg_resources.resource_filename('notedown',
-                                      'templates/markdown.tpl')
-markdown_figure_template \
-    = pkg_resources.resource_filename('notedown',
-                                      'templates/markdown_outputs.tpl')
+
+def main(args, help=''):
+    global markdown_template, markdown_figure_template
+
+    with (
+        importlib.resources.path('notedown',
+                                 'templates/markdown.tpl')
+        as markdown_template,
+        importlib.resources.path('notedown',
+                                 'templates/markdown_outputs.tpl')
+        as markdown_figure_template
+    ):
+        return _main(args, help)
+
 
 examples = """
 Example usage of notedown
@@ -202,7 +210,9 @@ def command_line_parser():
     return parser
 
 
-def main(args, help=''):
+def _main(args, help=''):
+    global markdown_template, markdown_figure_template
+
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
 
