@@ -17,12 +17,7 @@ from .notedown import (MarkdownReader,
                        run,
                        strip)
 
-
-try:
-    __version__ = pkg_resources.require('notedown')[0].version
-
-except pkg_resources.DistributionNotFound:
-    __version__ = 'testing'
+__version__ = '1.5.1'
 
 markdown_template \
     = pkg_resources.resource_filename('notedown',
