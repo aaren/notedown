@@ -143,7 +143,7 @@ def pre_process_code_block(block):
 # based on the code block edges
 text_starts = [0] + [m.end() for m in code_matches]
 text_stops = [m.start() for m in code_matches] + [len(text)]
-text_limits = zip(text_starts, text_stops)
+text_limits = list(zip(text_starts, text_stops))
 
 # list of the groups from the code blocks
 code_blocks = [m.groupdict() for m in code_matches]
@@ -152,13 +152,13 @@ code_blocks = [dict(d.items() + [('type', code)]) for d in
                                                             code_blocks]
 
 # remove indents, add code magic, etc.
-map(pre_process_code_block, code_blocks)
+list(map(pre_process_code_block, code_blocks))
 
 text_blocks = [{'content': text[i:j], 'type': markdown} for i, j
                                                    in text_limits]
 
 # create a list of the right length
-all_blocks = range(len(text_blocks) + len(code_blocks))
+all_blocks = list(range(len(text_blocks) + len(code_blocks)))
 
 # cells must alternate in order
 all_blocks[::2] = text_blocks
